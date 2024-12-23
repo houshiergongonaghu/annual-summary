@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>样式系统测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        /* 测试辅助样式 */
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .viewport-size {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 测试控制面板 -->
+    <div class="test-controls">
+        <button onclick="addMessage('ai')">添加AI消息</button>
+        <button onclick="addMessage('user')">添加用户消息</button>
+        <button onclick="toggleTheme()">切换主题</button>
+    </div>
+    
+    <!-- 视口大小显示 -->
+    <div class="viewport-size"></div>
+
+    <div class="chat-container">
+        <!-- 测试聊天头部 -->
+        <div class="chat-header">
+            <h2>年度总结助手 - 胖虎</h2>
+        </div>
+
+        <!-- 测试消息区域 -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- AI消息测试 -->
+            <div class="message ai-message">
+                你好，我是年度总结分析师胖虎！👋
+                <br><br>
+                请你从以下方向中选择想要总结的内容：
+                <br><br>
+                1. 个人成长
+                2. 未来发展
+                3. 情感生活
+                4. 职业发展
+            </div>
+
+            <!-- 用户消息测试 -->
+            <div class="message user-message">
+                我想聊聊个人成长
+            </div>
+
+            <!-- 测试长消息 -->
+            <div class="message ai-message">
+                这是一段很长的消息，用来测试消息换行效果和样式。这是一段很长的消息，用来测试消息换行效果和样式。这是一段很长的消息，用来测试消息换行效果和样式。
+            </div>
+        </div>
+
+        <!-- 测试输入区域 -->
+        <div class="chat-input">
+            <input type="text" placeholder="输入你的选择或回答...">
+            <button>发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 显示视口大小
+        function updateViewportSize() {
+            const size = document.querySelector('.viewport-size');
+            size.textContent = `视口大小: ${window.innerWidth}px × ${window.innerHeight}px`;
+        }
+        
+        window.addEventListener('resize', updateViewportSize);
+        updateViewportSize();
+
+        // 添加测试消息
+        function addMessage(type) {
+            const messages = document.getElementById('chatMessages');
+            const message = document.createElement('div');
+            message.className = `message ${type}-message`;
+            message.textContent = type === 'ai' ? 
+                '这是一条新的AI测试消息' : 
+                '这是一条新的用户测试消息';
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // 切换主题（用于测试CSS变量）
+        function toggleTheme() {
+            document.documentElement.style.setProperty('--primary-color', 
+                getComputedStyle(document.documentElement)
+                    .getPropertyValue('--primary-color') === ' #075e54' 
+                        ? '#2c3e50' 
+                        : '#075e54'
+            );
+        }
+
+        // 获取DOM元素
+        const input = document.querySelector('.chat-input input');
+        const sendButton = document.querySelector('.chat-input button');
+        
+        // 发送消息函数
+        function sendMessage() {
+            const text = input.value.trim();
+            if (text) {
+                // 添加用户消息
+                addMessage('user', text);
+                // 清空输入框
+                input.value = '';
+                
+                // 模拟AI回复
+                setTimeout(() => {
+                    addMessage('ai', '这是AI的回复消息');
+                }, 1000);
+            }
+        }
+        
+        // 修改addMessage函数，支持自定义文本
+        function addMessage(type, text) {
+            const messages = document.getElementById('chatMessages');
+            const message = document.createElement('div');
+            message.className = `message ${type}-message`;
+            message.textContent = text;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // 绑定事件
+        sendButton.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
