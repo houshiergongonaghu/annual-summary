@@ -1,23 +1,5 @@
-import { ChatMessages } from './components/ChatMessages.js';
-import { ChatLogic } from './scripts/chat-logic.js';
-
+// 移除import语句，直接使用全局变量
 document.addEventListener('DOMContentLoaded', () => {
-    const app = document.getElementById('app');
-    
-    // 创建聊天界面
-    app.innerHTML = `
-        <div class="chat-container">
-            <div class="chat-header">
-                <h2>年度总结助手 - 胖虎</h2>
-            </div>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input">
-                <input type="text" id="userInput" placeholder="输入你的选择或回答...">
-                <button id="sendButton">发送</button>
-            </div>
-        </div>
-    `;
-
     const chatMessages = new ChatMessages(document.getElementById('chatMessages'));
     const chatLogic = new ChatLogic();
 
@@ -31,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
         2. 未来发展
         3. 情感生活
         4. 职业发展
-        <br><br>
-        请输入你想要探讨的方向...
     `, true);
 
     // 处理用户输入
@@ -44,9 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
             chatMessages.addMessage(text, false);
             input.value = '';
             
-            const response = await chatLogic.handleUserInput(text);
-            if (response) {
-                chatMessages.addMessage(response, true);
+            try {
+                const response = await chatLogic.handleUserInput(text);
+                if (response) {
+                    chatMessages.addMessage(response, true);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                chatMessages.addMessage('抱歉，处理消息时出现错误。', true);
             }
         }
     };
