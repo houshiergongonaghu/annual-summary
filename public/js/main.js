@@ -1,7 +1,11 @@
-// 移除import语句，直接使用全局变量
 document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = new ChatMessages(document.getElementById('chatMessages'));
     const chatLogic = new ChatLogic();
+    const userInput = document.getElementById('userInput');
+    const sendButton = document.getElementById('sendButton');
+    
+    // 禁用状态管理
+    let isProcessing = false;
 
     // 初始化欢迎消息
     chatMessages.addMessage(`
@@ -13,34 +17,103 @@ document.addEventListener('DOMContentLoaded', () => {
         2. 未来发展
         3. 情感生活
         4. 职业发展
-    `, true);
+    `, true, false);
+
+    // 输入建议
+    const suggestions = {
+        initial: ['1', '2', '3', '4', '个人成长', '未来发展', '情感生活', '职业发展'],
+        confirmation: ['是', '否'],
+    };
 
     // 处理用户输入
     const handleSend = async () => {
-        const input = document.getElementById('userInput');
-        const text = input.value.trim();
+        const text = userInput.value.trim();
         
-        if (text) {
+        if (isProcessing) {
+            chatMessages.showError('请等待上一条消息处理完成...');
+            return;
+        }
+
+        if (!text) {
+            chatMessages.showError('请输入内容');
+            return;
+        }
+
+        try {
+            isProcessing = true;
+            updateUIState(true);
+
+            // 添加用户消息
             chatMessages.addMessage(text, false);
-            input.value = '';
-            
-            try {
-                const response = await chatLogic.handleUserInput(text);
-                if (response) {
-                    chatMessages.addMessage(response, true);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                chatMessages.addMessage('抱歉，处理消息时出现错误。', true);
+            userInput.value = '';
+
+            // 获取AI响应
+            const response = await chatLogic.handleUserInput(text);
+            if (response) {
+                await chatMessages.addMessage(response, true);
+                
+                // 更新输入建议
+                updateInputSuggestions();
             }
+
+        } catch (error) {
+            console.error('Error:', error);
+            chatMessages.showError('抱歉，处理消息时出现错误。');
+        } finally {
+            isProcessing = false;
+            updateUIState(false);
         }
     };
 
+    // 更新UI状态
+    const updateUIState = (processing) => {
+        userInput.disabled = processing;
+        sendButton.disabled = processing;
+        sendButton.textContent = processing ? '发送中...' : '发送';
+        
+        if (processing) {
+            sendButton.classList.add('processing');
+        } else {
+            sendButton.classList.remove('processing');
+        }
+    };
+
+    // 更新输入建议
+    const updateInputSuggestions = () => {
+        // 清除旧的建议
+        const oldSuggestion = document.querySelector('.input-suggestion');
+        if (oldSuggestion) {
+            oldSuggestion.remove();
+        }
+
+        // 根据对话状态显示建议
+        let currentSuggestions;
+        if (!chatLogic.currentTopic) {
+            currentSuggestions = suggestions.initial;
+        } else if (chatLogic.isGeneratingSummary) {
+            currentSuggestions = suggestions.confirmation;
+        }
+
+        if (currentSuggestions) {
+            const suggestionText = `建议输入: ${currentSuggestions.join(' | ')}`;
+            chatMessages.showInputSuggestion(suggestionText);
+        }
+    };
+
+    // 输入框焦点处理
+    userInput.addEventListener('focus', () => {
+        updateInputSuggestions();
+    });
+
     // 绑定事件
-    document.getElementById('sendButton').addEventListener('click', handleSend);
-    document.getElementById('userInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+    sendButton.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             handleSend();
         }
     });
+
+    // 初始输入建议
+    updateInputSuggestions();
 }); 
