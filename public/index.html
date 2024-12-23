@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年度总结对话</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+            line-height: 1.6;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #075e54;
+            color: white;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            max-width: 80%;
+            border-radius: 15px;
+        }
+
+        .ai-message {
+            background: white;
+            border-radius: 0 15px 15px 15px;
+        }
+
+        .user-message {
+            background: #dcf8c6;
+            margin-left: auto;
+            border-radius: 15px 0 15px 15px;
+        }
+
+        .chat-input {
+            padding: 15px;
+            background: #f0f0f0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .chat-input button {
+            background: #075e54;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #128c7e;
+        }
+
+        .message pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>年度总结助手 - 胖虎</h2>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- 消息内容 -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="输入你的选择或回答...">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化变量
+        let currentStage = 'DIRECTION_SELECTION';
+        let selectedDirection = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+
+        // 初始化欢迎消息
+        window.onload = function() {
+            addMessage(`
+                你好，我是年度总结分析师胖虎！👋
+                <br><br>
+                请你从以下方向中选择想要总结的内容：
+                <br><br>
+                1. 个人成长
+                2. 未来发展
+                3. 情感生活
+                4. 职业发展
+                <br><br>
+                请输入你想要探讨的方向...
+            `, true);
+        };
+
+        function addMessage(content, isAI = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isAI ? 'ai-message' : 'user-message'}`;
+            messageDiv.innerHTML = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                addMessage(text, false);
+                input.value = '';
+                
+                // 处理用户输入
+                if (currentStage === 'DIRECTION_SELECTION') {
+                    handleDirectionSelection(text);
+                } else if (currentStage === 'ANSWERING_QUESTIONS') {
+                    handleQuestionAnswer(text);
+                }
+            }
+        }
+
+        function handleDirectionSelection(input) {
+            selectedDirection = input;
+            currentStage = 'ANSWERING_QUESTIONS';
+            addMessage(`你选择了: ${input}`, true);
+        }
+
+        function handleQuestionAnswer(input) {
+            userAnswers.push(input);
+            addMessage(`收到你的回答: ${input}`, true);
+        }
+    </script>
+</body>
+</html>

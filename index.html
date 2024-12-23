@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年度总结对话</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #075e54;
+            color: white;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ai-message {
+            background: white;
+            margin-right: auto;
+            border-radius: 0 15px 15px 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .user-message {
+            background: #dcf8c6;
+            margin-left: auto;
+            border-radius: 15px 0 15px 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .chat-input {
+            padding: 15px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .chat-input button {
+            background: #075e54;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #128c7e;
+        }
+
+        .message pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>年度总结助手 - 胖虎</h2>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">
+                你好，我是年度总结分析师胖虎！👋
+                <br><br>
+                请你从以下方向中选择想要总结的内容：
+                <br><br>
+                1. 个人成长
+                2. 未来发展
+                3. 情感生活
+                4. 职业发展
+                <br><br>
+                请输入你想要探讨的方向...
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="输入你的选择或回答...">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        let currentStage = 'DIRECTION_SELECTION';
+        let selectedDirection = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+
+        const questionsByDirection = {
+            '个人成长': [
+                '今年你学到了哪些新技能或知识？',
+                '今年遇到的最大挑战是什么，你是如何克服的？',
+                '有什么特别让你感到骄傲的事情吗？'
+            ],
+            '未来发展': [
+                '明年你最想实现的三个目标是什么？',
+                '为了实现这些目标，你准备采取哪些具体行动？',
+                '你认为可能会遇到哪些挑战？'
+            ],
+            '情感生活': [
+                '今年在情感方面有什么特别的经历吗？',
+                '对感情生活有什么新的认知和感悟？',
+                '明年在情感方面有什么期待？'
+            ],
+            '职业发展': [
+                '今年在工作中有什么重要的成就？',
+                '你觉得自己的职业技能有哪些提升？',
+                '对未来的职业规划是什么？'
+            ]
+        };
+
+        function addMessage(content, isAI = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isAI ? 'ai-message' : 'user-message'}`;
+            messageDiv.innerHTML = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, false);
+            userInput.value = '';
+
+            if (currentStage === 'DIRECTION_SELECTION') {
+                handleDirectionSelection(message);
+            } else if (currentStage === 'ANSWERING_QUESTIONS') {
+                handleQuestionAnswer(message);
+            }
+        }
+
+        function handleDirectionSelection(direction) {
+            if (questionsByDirection[direction]) {
+                selectedDirection = direction;
+                currentStage = 'ANSWERING_QUESTIONS';
+                setTimeout(() => {
+                    addMessage(`好的，让我们来聊聊${direction}。`, true);
+                    setTimeout(() => {
+                        askQuestion();
+                    }, 1000);
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    addMessage('请选择列表中的一个有效方向。', true);
+                }, 500);
+            }
+        }
+
+        function askQuestion() {
+            const questions = questionsByDirection[selectedDirection];
+            if (currentQuestionIndex < questions.length) {
+                addMessage(questions[currentQuestionIndex], true);
+            } else {
+                generateSummary();
+            }
+        }
+
+        function handleQuestionAnswer(answer) {
+            const currentQuestion = questionsByDirection[selectedDirection][currentQuestionIndex];
+            userAnswers.push({
+                question: currentQuestion,
+                answer: answer
+            });
+
+            currentQuestionIndex++;
+            setTimeout(() => {
+                if (currentQuestionIndex < questionsByDirection[selectedDirection].length) {
+                    askQuestion();
+                } else {
+                    generateSummary();
+                }
+            }, 1000);
+        }
+
+        function generateSummary() {
+            addMessage('谢谢你的分享！让我为你生成一份总结...', true);
+            
+            setTimeout(() => {
+                let summary = '';
+                switch(selectedDirection) {
+                    case '个人成长':
+                        summary = generatePersonalGrowthSummary();
+                        break;
+                    case '未来发展':
+                        summary = generateFuturePlanSummary();
+                        break;
+                    case '情感生活':
+                        summary = generateEmotionalLifeSummary();
+                        break;
+                    case '职业发展':
+                        summary = generateCareerSummary();
+                        break;
+                }
+                addMessage(summary, true);
+            }, 1500);
+        }
+
+        function generatePersonalGrowthSummary() {
+            const skills = userAnswers[0].answer;
+            const challenges = userAnswers[1].answer;
+            const proud = userAnswers[2].answer;
+
+            return `📝 2024年个人成长总结报告
+
+🌟 技能成长
+你在今年学习了${skills}，这些新技能展现了你持续学习的热情。
+
+💪 挑战突破
+面对${challenges}这样的挑战，你展现出了强大的适应力和解决问题的能力。
+
+🏆 个人成就
+特别值得骄傲的是${proud}，这证明了你的努力得到了回报。
+
+🎯 综合评估
+根据你的分享，2024年是你个人成长的丰收年。你不仅在技能上有所提升，更在面对挑战时展现出了成熟的处理方式。
+
+💡 建议展望
+建议你：
+1. 继续保持学习的热情，将新技能与实践结合
+2. 把克服挑战的经验总结为经验，用于未来发展
+3. 设定新的目标，让成长持续发生
+
+你的2024年是充满收获的一年，相信这些经历将成为你未来发展的重要基石！`;
+        }
+
+        function generateFuturePlanSummary() {
+            const goals = userAnswers[0].answer;
+            const actions = userAnswers[1].answer;
+            const challenges = userAnswers[2].answer;
+
+            return `📝 未来发展规划分析报告
+
+🎯 目标愿景
+你提出的主要目标是${goals}，这些目标展现了你对未来的清晰规划。
+
+⚡ 行动计划
+你计划通过${actions}来实现这些目标，这些具体行动显示了你的执行力。
+
+⚠️ 挑战预期
+你预见到可能面临${challenges}等挑战，这种预判显示了你的思考深度。
+
+💫 战略建议
+1. 建议将大目标拆分为更小的阶段性目标
+2. 定期检查行动计划的执行情况
+3. 对预期挑战提前做好准备方案
+
+🌈 展望寄语
+你的规划既有远见又务实，建议你：
+1. 保持积极行动的同时保持灵活性
+2. 定期回顾和调整计划
+3. 在前进过程中及时总结经验
+
+相信通过努力，你一定能够实现这些精彩的目标！`;
+        }
+
+        function generateEmotionalLifeSummary() {
+            const experiences = userAnswers[0].answer;
+            const insights = userAnswers[1].answer;
+            const expectations = userAnswers[2].answer;
+
+            return `📝 2024年情感生活回顾报告
+
+💝 情感历程
+在过去的一年里，你经历了${experiences}，这些经历让你的情感世界更加丰富。
+
+💭 心得感悟
+通过这些经历，你领悟到${insights}，这些认知的提升对你来说非常宝贵。
+
+🌈 未来期待
+对未来，你期待${expectations}，这显示了你对感情生活的美好向往。
+
+💫 情感成长分析
+1. 你的经历帮助你更好地认识自己
+2. 这些体验让你在情感方面更加成熟
+3. 你对未来的期待既温暖又实际
+
+🌟 建议与展望
+建议你：
+1. 珍惜现有的情感连接
+2. 保持开放和真诚的心态
+3. 在维护关系的同时不忘自我提升
+
+愿你在新的一年里收获更多美好的情感体验！`;
+        }
+
+        function generateCareerSummary() {
+            const achievements = userAnswers[0].answer;
+            const improvements = userAnswers[1].answer;
+            const plans = userAnswers[2].answer;
+
+            return `📝 2024年职业发展总结报告
+
+🏆 年度成就
+你在工作中取得了${achievements}的成就，这些都是你职业发展的重要里程碑。
+
+📈 能力提升
+在专业技能方面，你提升了${improvements}，这些进步为你的职业发展打下了坚实基础。
+
+🎯 职业规划
+关于未来，你计划${plans}，这个规划展现了你的职业抱负。
+
+💫 发展分析
+1. 你的成就证明了你的专业能力
+2. 技能提升显示了你的学习热情
+3. 职业规划展现了你的远见卓识
+
+🌟 建议与展望
+建议你：
+1. 继续保持专业能力的提升
+2. 拓展职业人脉网络
+3. 关注行业发展趋势
+4. 平衡职业发展与个人生活
+
+相信通过持续努力，你一定能够实现更大的职业成就！`;
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
