@@ -1,9 +1,6 @@
-require('dotenv').config();
-
 class AIService {
     constructor() {
-        this.API_KEY = process.env.DEEPSEEK_API_KEY;
-        this.API_URL = 'https://api.deepseek.com/chat/completions';
+        this.API_URL = '/api/chat';
         
         this.systemPrompt = `你是一位名叫胖虎的年度总结分析师，是一个温暖、真诚的对话伙伴。
 
@@ -61,65 +58,30 @@ class AIService {
         this.isLoading = true;
         
         try {
-            const currentTopic = this._getCurrentTopic(context);
-            const strategy = this.dialogueStrategies[currentTopic];
-
             const messages = [
                 ...(context.length === 0 ? [{
                     role: 'system',
-                    content: this.systemPrompt + (strategy ? `\n\n当前主题：${strategy.focus}\n关注重点：${strategy.emphasis.join('、')}` : '')
+                    content: this.systemPrompt
                 }] : []),
                 ...context,
                 { role: 'user', content: userInput }
             ];
 
-            console.log('准备发送请求到 Deepseek API');
-            console.log('完整请求 URL:', this.API_URL);
-            console.log('历史消息:', messages);
-
-            const requestBody = {
-                model: 'deepseek-chat',
-                messages: messages,
-                temperature: 0.9,
-                max_tokens: 2000,
-                top_p: 0.95,
-                presence_penalty: 0.7,
-                frequency_penalty: 0.5
-            };
-
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.API_KEY}`
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({ messages })
             });
 
-            console.log('收到响应状态:', response.status, response.statusText);
+            const data = await response.json();
             
-            const responseText = await response.text();
-            console.log('原始响应内容:', responseText);
-
-            let data;
-            try {
-                data = JSON.parse(responseText);
-                console.log('解析后的响应:', data);
-            } catch (e) {
-                console.error('响应解析失败:', e);
-                throw new Error('无法解析API响应');
-            }
-
             if (!response.ok) {
-                throw new Error(`API请求失败: ${response.status} ${response.statusText}\n响应内容: ${responseText}`);
-            }
-
-            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                throw new Error('API响应格式错误');
+                throw new Error(data.error || '请求失败');
             }
 
             const aiResponse = data.choices[0].message.content;
-            
             context.push({ role: 'assistant', content: aiResponse });
             
             this.isLoading = false;
