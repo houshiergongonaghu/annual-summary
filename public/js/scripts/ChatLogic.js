@@ -97,19 +97,21 @@ class ChatLogic {
     }
 
     async generateSummary() {
-        const answers = Array.from(this.userAnswers.entries())
-            .map(([question, answer]) => `问：${question}\n答：${answer}`)
-            .join('\n\n');
+        const answers = Array.from(this.userAnswers.entries()).map(([question, answer]) => ({
+            question,
+            answer
+        }));
 
-        const summaryPrompt = `
-            基于以下问答内容，生成一个温暖、积极、有见地的总结：
-            ${answers}
-        `;
+        const topicNames = {
+            personalGrowth: '个人成长',
+            future: '未来发展',
+            relationship: '情感生活',
+            career: '职业发展'
+        };
 
-        return await this.aiService.getResponse(summaryPrompt, [
-            { role: 'system', content: '请生成一个鼓励的、有见地的总结' },
-            { role: 'user', content: summaryPrompt }
-        ]);
+        const topicName = topicNames[this.currentTopic];
+
+        return await this.aiService.generateSummary(answers, topicName);
     }
 
     reset() {
