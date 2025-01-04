@@ -1,0 +1,35 @@
+export class QuestionBank {
+  constructor() {
+    // 按方向和深度存储问题
+    this.questions = {
+      personalGrowth: {
+        shallow: [
+          "今年有什么让你感到开心的事情?",
+          "你学会了什么新技能?"
+        ],
+        deep: [
+          "这些经历对你有什么影响?",
+          "从中你学到了什么?"
+        ]
+      },
+      career: {
+        shallow: [
+          "今年工作上有什么变化?",
+          "有什么工作成就?"
+        ],
+        deep: [
+          "这些经历如何影响了你的职业规划?",
+          "你对未来的职业有什么新的想法?"
+        ]
+      },
+      // 其他方向类似...
+    };
+  }
+
+  // 获取问题的简单实现
+  getQuestion(direction, depth = 'shallow') {
+    const questions = this.questions[direction][depth];
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    return questions[randomIndex];
+  }
+} 

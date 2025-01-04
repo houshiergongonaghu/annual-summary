@@ -1,0 +1,28 @@
+// 简单的AI服务实现
+export class AIService {
+    constructor() {
+        this.basePrompt = `你是一个富有同理心的对话助手。
+        请用温暖、理解的语气回应用户。
+        在回应中:
+        1. 首先认可用户的感受
+        2. 然后给出温和的引导
+        3. 鼓励用户分享更多
+        4. 语气要自然友好`;
+    }
+
+    async generateResponse(userAnswer) {
+        try {
+            const prompt = `${this.basePrompt}
+            用户的回答是: "${userAnswer}"
+            请给出回应。`;
+            
+            // 调用AI API获取回复
+            const response = await this.callAI(prompt);
+            return response;
+            
+        } catch (error) {
+            console.error('AI响应出错:', error);
+            return '抱歉,我现在无法正确回应,请稍后再试。';
+        }
+    }
+} 
