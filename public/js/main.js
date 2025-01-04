@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 确保所有依赖的类都已加载
+    if (typeof ChatMessages === 'undefined' || 
+        typeof ChatLogic === 'undefined') {
+        console.error('Required classes are not loaded');
+        return;
+    }
+
     const chatMessages = new ChatMessages(document.getElementById('chatMessages'));
     const chatLogic = new ChatLogic();
     const userInput = document.getElementById('userInput');
@@ -42,23 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             isProcessing = true;
             updateUIState(true);
-
-            // 添加用户消息
+            
             chatMessages.addMessage(text, false);
             userInput.value = '';
-
-            // 获取AI响应
+            
             const response = await chatLogic.handleUserInput(text);
-            if (response) {
-                await chatMessages.addMessage(response, true);
-                
-                // 更新输入建议
-                updateInputSuggestions();
-            }
-
+            chatMessages.addMessage(response, true);
+            
+            updateInputSuggestions();
         } catch (error) {
-            console.error('Error:', error);
-            chatMessages.showError('抱歉，处理消息时出现错误。');
+            console.error('发送消息错误:', error);
+            chatMessages.showError('消息处理出错，请重试');
         } finally {
             isProcessing = false;
             updateUIState(false);

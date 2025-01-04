@@ -5,30 +5,34 @@ class AIService {
         this.systemPrompt = `你是一位名叫胖虎的年度总结分析师，是一个温暖、真诚的对话伙伴。
 
 核心原则：
-1. 像朋友一样自然对话，避免说教
-2. 回复要紧扣用户的分享内容
-3. 不要说无关的内容
-4. 根据用户的表达量来调整回复长度
+1. 真诚共情：深入理解用户的情感和经历
+2. 个性化回应：针对用户的具体分享给出独特见解
+3. 循序渐进：通过自然的追问深入话题
+4. 平等对话：以朋友的身份交流，避免说教
 
 对话策略：
-1. 当用户说得少时：
-- 表示理解和好奇
-- 提出开放性问题
-- 引导用户展开分享
-例如："这个经历听起来很有趣，能具体说说是什么情况吗？"
+1. 回应用户时：
+- 首先对用户的分享表示理解和认可
+- 分享类似的经历或感受建立共鸣
+- 提出有深度的见解或建议
+- 用开放性问题自然引导深入
 
-2. 当用户分享较多时：
-- 抓住关键点回应
-- 提供个性化的见解
-- 建立深层连接
-例如："从你的分享中，我注意到..."
+2. 话题切换时：
+- 找到当前话题和新话题的关联点
+- 解释为什么要聊这个新话题
+- 平滑过渡避免突兀
 
-3. 始终保持：
-- 自然的对话节奏
-- 真诚的关注态度
-- 适度的引导和启发
+3. 追问策略：
+- 针对用户提到的关键词展开
+- 引导用户说出具体的例子
+- 探讨背后的原因和感受
+- 帮助用户获得新的认知
 
-记住：不要为了凑字数而说废话，每句话都要有价值，都要和用户的分享有关。`;
+始终记住：每次回应都要：
+1. 体现真诚的理解
+2. 给出个性化的见解
+3. 自然地引导深入
+4. 保持对话的连贯性`;
 
         this.dialogueStrategies = {
             personalGrowth: {
@@ -54,17 +58,25 @@ class AIService {
         };
     }
 
-    async getResponse(userInput, context = []) {
+    async getResponse(text, context, isFollowUp = false) {
         this.isLoading = true;
         
         try {
+            // 根据是否是跟进对话调整prompt
+            const prompt = isFollowUp ? 
+                this.generateFollowUpPrompt(text, context) :
+                this.generateNormalPrompt(text, context);
+
             const messages = [
-                ...(context.length === 0 ? [{
+                {
                     role: 'system',
                     content: this.systemPrompt
-                }] : []),
+                },
                 ...context,
-                { role: 'user', content: userInput }
+                { 
+                    role: 'user', 
+                    content: prompt 
+                }
             ];
 
             const response = await fetch(this.API_URL, {
@@ -82,15 +94,66 @@ class AIService {
             }
 
             const aiResponse = data.choices[0].message.content;
-            context.push({ role: 'assistant', content: aiResponse });
-            
             this.isLoading = false;
             return aiResponse;
 
         } catch (error) {
             this.isLoading = false;
             console.error('AI响应错误:', error);
-            throw new Error('API调用失败: ' + error.message);
+            throw error;
+        }
+    }
+
+    // 生成跟进问题的prompt
+    generateFollowUpPrompt(text, context) {
+        const recentContext = context.slice(-3); // 获取最近的对话上下文
+        
+        return `基于以下对话上下文：
+${recentContext.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+用户刚才的回答是："${text}"
+
+请以朋友的身份生成一个自然的回应，包括：
+1. 对用户分享的理解和认可
+2. 分享相关的经历或感受(可选)
+3. 一个能够引导用户更深入思考和分享的问题
+
+注意：
+- 回应要体现出你真的理解和关心用户
+- 追问要自然，像朋友间的对话
+- 避免生硬的说教和客套话
+- 问题要具体，不要太宽泛`;
+    }
+
+    // 生成常规对话的prompt
+    generateNormalPrompt(text, context) {
+        const currentTopic = this._getCurrentTopic(context);
+        const strategy = this.dialogueStrategies[currentTopic];
+        
+        return `作为一个${strategy.style}的对话伙伴，请对用户的分享："${text}"生成回应。
+
+回应要求：
+1. 表达真诚的理解和认可
+2. 给出个性化的见解
+3. 分享相关的经历或感受
+4. 自然地引导继续交流
+
+重点关注：${strategy.focus}
+关键词：${strategy.emphasis.join(', ')}`;
+    }
+
+    // 生成跟进问题
+    async generateFollowUpQuestion(prompt) {
+        try {
+            const response = await this.getResponse(prompt, [], true);
+            // 确保返回的是一个问题
+            if (!response.endsWith('？') && !response.endsWith('?')) {
+                return response + '？';
+            }
+            return response;
+        } catch (error) {
+            console.error('生成跟进问题错误:', error);
+            throw error;
         }
     }
 

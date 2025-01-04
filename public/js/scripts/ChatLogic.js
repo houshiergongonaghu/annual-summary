@@ -3,10 +3,12 @@ class ChatLogic {
         this.aiService = new AIService();
         this.questionBank = new QuestionBank();
         this.currentTopic = null;
-        this.questionIndex = 0;
         this.context = [];
         this.userAnswers = new Map();
         this.isGeneratingSummary = false;
+        this.minAnswerLength = 10;
+        this.followUpQuestions = new Map();
+        this.conversationDepth = new Map();
     }
 
     async handleUserInput(text) {
@@ -59,27 +61,65 @@ class ChatLogic {
     }
 
     async handleQuestionAnswer(text) {
-        const currentQuestion = this.questionBank.getNextQuestion(
-            this.currentTopic, 
-            this.questionIndex - 1
-        );
-        
-        this.userAnswers.set(currentQuestion, text);
+        try {
+            const currentQuestion = this.questionBank.getCurrentQuestion(this.currentTopic);
+            if (!currentQuestion) {
+                console.error('无法获取当前问题');
+                return '抱歉，处理问题时出现错误。';
+            }
 
-        const response = await this.aiService.getResponse(text, this.context);
-        this.context.push({ role: 'assistant', content: response });
-
-        const nextQuestion = this.questionBank.getNextQuestion(
-            this.currentTopic, 
-            this.questionIndex++
-        );
-
-        if (nextQuestion) {
-            return `${response}\n\n${nextQuestion}`;
-        } else {
+            this.userAnswers.set(currentQuestion, text);
+            
+            const needFollowUp = this.analyzeAnswer(text);
+            const conversationDepth = this.conversationDepth.get(currentQuestion) || 0;
+            
+            if (needFollowUp && conversationDepth < 2) {
+                this.conversationDepth.set(currentQuestion, conversationDepth + 1);
+                
+                const followUpQuestion = await this.generateFollowUpQuestion(currentQuestion, text);
+                return followUpQuestion;
+            }
+            
+            const nextQuestion = this.questionBank.getNextQuestion(this.currentTopic);
+            if (nextQuestion) {
+                const transition = await this.generateTransition(currentQuestion, nextQuestion, text);
+                return `${transition}\n\n${nextQuestion}`;
+            }
+            
             this.isGeneratingSummary = true;
-            return `${response}\n\n看起来我们已经聊完了所有问题。要为您生成总结吗？(请回答"是"或"否")`;
+            return '看起来我们已经聊了很多了。要不要我帮你总结一下？(回答"是"或"否")';
+        } catch (error) {
+            console.error('问题处理错误:', error);
+            return '抱歉，处理您的回答时出现了问题。请重试。';
         }
+    }
+
+    analyzeAnswer(text) {
+        const answer = text.trim();
+        
+        const hasDetails = answer.includes('因为') || answer.includes('所以') || 
+                          answer.includes('但是') || answer.includes('而且');
+        
+        const isComplete = answer.length >= this.minAnswerLength && 
+                          !answer.includes('不知道') && 
+                          !answer.includes('随便');
+                          
+        const emotionalWords = ['觉得', '感觉', '认为', '希望', '担心', '开心', '难过'];
+        const hasEmotion = emotionalWords.some(word => answer.includes(word));
+        
+        return !isComplete || (hasEmotion && !hasDetails);
+    }
+
+    async generateFollowUpQuestion(originalQuestion, answer) {
+        const followUp = this.followUpQuestions.get(originalQuestion);
+        if (followUp) {
+            return followUp;
+        }
+
+        const prompt = `基于用户对"${originalQuestion}"的回答："${answer}"，生成一个更具体的跟进问题，引导用户深入思考和表达。`;
+        const followUpQuestion = await this.aiService.generateFollowUpQuestion(prompt);
+        
+        return followUpQuestion;
     }
 
     async handleSummaryConfirmation(text) {
@@ -120,5 +160,16 @@ class ChatLogic {
         this.context = [];
         this.userAnswers.clear();
         this.isGeneratingSummary = false;
+    }
+
+    async generateTransition(currentQuestion, nextQuestion, lastAnswer) {
+        const prompt = `基于用户对"${currentQuestion}"的回答："${lastAnswer}"，
+请生成一个自然的过渡语，引导到下一个问题："${nextQuestion}"。
+过渡语要：
+1. 对用户的分享做简短的总结或认可
+2. 解释为什么要问下一个问题
+3. 让话题转换显得自然`;
+
+        return await this.aiService.getResponse(prompt, this.context);
     }
 } 
