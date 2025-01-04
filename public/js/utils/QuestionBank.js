@@ -37,7 +37,7 @@ class QuestionBank {
             return null;
         }
 
-        const currentIndex = this.currentIndices.get(topic) || 0;
+        const currentIndex = (this.currentIndices.get(topic) || 0) - 1;
         return this.questions[topic][currentIndex];
     }
 
@@ -63,11 +63,35 @@ class QuestionBank {
 
     // 重置某个方向的问题记录
     resetTopic(topic) {
+        if (!this.questions[topic]) {
+            console.error('无效的主题:', topic);
+            return;
+        }
         this.currentIndices.delete(topic);
     }
 
     // 重置所有记录
     reset() {
         this.currentIndices.clear();
+    }
+
+    // 添加新方法
+    getTopicProgress(topic) {
+        if (!this.questions[topic]) {
+            return null;
+        }
+        const currentIndex = this.currentIndices.get(topic) || 0;
+        return {
+            current: currentIndex,
+            total: this.questions[topic].length
+        };
+    }
+
+    hasMoreQuestions(topic) {
+        if (!this.questions[topic]) {
+            return false;
+        }
+        const currentIndex = this.currentIndices.get(topic) || 0;
+        return currentIndex < this.questions[topic].length;
     }
 }

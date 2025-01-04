@@ -211,4 +211,53 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
 
         return await this.getResponse(summaryPrompt, []);
     }
+
+    async generateFinalSummary(allAnswers) {
+        const summaryPrompt = `请根据用户在不同方向的分享，生成一份全面的年度总结报告。
+
+用户的分享内容：
+${allAnswers.map(({topic, answers}) => `
+${this.getTopicName(topic)}:
+${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n')}
+`).join('\n')}
+
+要求：
+1. 分析用户在各个方向的表现和特点
+2. 发现用户的潜在特质和优势
+3. 找出不同方向之间的联系
+4. 提供有建设性的建议
+5. 用温暖鼓励的语气
+6. 让用户对自己更有信心
+7. 对未来充满希望
+
+格式参考：
+📝 2023年度总结报告
+
+🌟 年度亮点
+[总结用户的主要成就和进步]
+
+💡 特质发现
+[分析用户的独特品质]
+
+📈 多维度分析
+[从不同方向分析用户的表现]
+
+🎯 发展建议
+[提供具体可行的建议]
+
+💪 未来展望
+[给出温暖有力的鼓励]`;
+
+        return await this.getResponse(summaryPrompt, []);
+    }
+
+    getTopicName(topic) {
+        const names = {
+            personalGrowth: '个人成长',
+            future: '未来发展',
+            relationship: '情感生活',
+            career: '职业发展'
+        };
+        return names[topic] || topic;
+    }
 } 
