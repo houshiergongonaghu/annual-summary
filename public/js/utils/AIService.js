@@ -260,4 +260,14 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n')}
         };
         return names[topic] || topic;
     }
+
+    async generateResponse(question, answer, context, isLastQuestion = false) {
+        const prompt = `${this.systemPrompt}\n\n当前问题：${question}\n用户回答：${answer}\n\n${
+            isLastQuestion ? 
+            '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
+            '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。'
+        }`;
+
+        return await this.getResponse(prompt, context);
+    }
 } 

@@ -98,7 +98,17 @@ class ChatLogic {
 
             if (depth >= this.maxFollowUpCount - 1) {
                 this.completedTopics.add(this.currentTopic);
-                return await this.suggestNextTopic();
+                
+                const response = await this.aiService.generateResponse(
+                    currentQuestion,
+                    text,
+                    this.context,
+                    true
+                );
+
+                const nextTopicPrompt = await this.suggestNextTopic();
+                
+                return `${response}\n\n${nextTopicPrompt}`;
             }
 
             const nextQuestion = this.questionBank.getNextQuestion(this.currentTopic);
@@ -107,7 +117,6 @@ class ChatLogic {
                 return `${transition}\n\n${nextQuestion}`;
             }
 
-            this.completedTopics.add(this.currentTopic);
             return await this.suggestNextTopic();
 
         } catch (error) {
@@ -220,7 +229,7 @@ class ChatLogic {
             .map(topic => `${topicNames[topic]}`)
             .join('、');
 
-        return `我们已经深入探讨完这个方向了。\n\n要不要继续聊聊其他方面？\n\n还可以聊聊：${suggestions}\n\n(直接输入想聊的方向，或输入"结束"生成总结报告)`;
+        return `看来我们已经对这个方向有了深入的了解。要不要也聊聊其他方面？\n\n还可以探讨：${suggestions}\n\n(直接输入想聊的方向，或输入"结束"生成总结报告)`;
     }
 
     async generateFinalSummary() {
