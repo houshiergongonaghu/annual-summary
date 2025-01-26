@@ -1,5 +1,6 @@
 class ChatLogic {
     constructor() {
+        console.log('ChatLogic 初始化');
         this.aiService = new AIService();
         this.questionBank = new QuestionBank();
         this.currentTopic = null;
@@ -15,6 +16,15 @@ class ChatLogic {
     }
 
     async handleUserInput(text) {
+        console.log('收到用户输入:', text);
+        console.log('当前完整状态:', {
+            isChoosingNewTopic: this.isChoosingNewTopic,
+            isGeneratingSummary: this.isGeneratingSummary,
+            currentTopic: this.currentTopic,
+            completedTopics: Array.from(this.completedTopics),
+            userAnswers: this.userAnswers
+        });
+
         if (!this.validateInput(text)) {
             return '请输入有效的内容（不少于2个字符）';
         }
@@ -22,12 +32,18 @@ class ChatLogic {
         this.context.push({ role: 'user', content: text });
 
         try {
-            if (!this.currentTopic) {
+            if (this.isChoosingNewTopic) {
+                if (text.toLowerCase() === '结束') {
+                    console.log('用户选择结束，生成总结报告');
+                    const summary = await this.generateFinalSummary();
+                    this.reset();
+                    return summary;
+                }
                 return this.handleTopicSelection(text);
             }
 
-            if (this.isGeneratingSummary) {
-                return this.handleSummaryConfirmation(text);
+            if (!this.currentTopic) {
+                return this.handleTopicSelection(text);
             }
 
             return await this.handleQuestionAnswer(text);
@@ -72,14 +88,6 @@ class ChatLogic {
 
     async handleQuestionAnswer(text) {
         try {
-            if (this.isChoosingNewTopic) {
-                if (text.toLowerCase() === '结束') {
-                    this.isGeneratingSummary = true;
-                    return await this.generateFinalSummary();
-                }
-                return this.handleTopicSelection(text);
-            }
-
             const currentQuestion = this.questionBank.getCurrentQuestion(this.currentTopic);
             if (!currentQuestion) {
                 console.error('无法获取当前问题');
@@ -106,9 +114,28 @@ class ChatLogic {
                     true
                 );
 
-                const nextTopicPrompt = await this.suggestNextTopic();
-                
-                return `${response}\n\n${nextTopicPrompt}`;
+                this.isChoosingNewTopic = true;
+                this.currentTopic = null;
+
+                const remainingTopics = ['personalGrowth', 'future', 'relationship', 'career']
+                    .filter(topic => !this.completedTopics.has(topic));
+
+                const topicNames = {
+                    personalGrowth: '个人成长',
+                    future: '未来发展',
+                    relationship: '情感生活',
+                    career: '职业发展'
+                };
+
+                const suggestions = remainingTopics
+                    .map(topic => `${topicNames[topic]}`)
+                    .join('、');
+
+                return `${response}\n\n看来我们已经完成了这个方向的交流。${
+                    remainingTopics.length > 0 
+                        ? `\n\n还可以探讨：${suggestions}\n\n(直接输入想聊的方向，或输入"结束"生成总结报告)`
+                        : '\n\n所有方向都已经聊完了，输入"结束"来生成总结报告吧！'
+                }`;
             }
 
             const nextQuestion = this.questionBank.getNextQuestion(this.currentTopic);
@@ -186,6 +213,7 @@ class ChatLogic {
     }
 
     reset() {
+        console.log('重置所有状态');
         this.currentTopic = null;
         this.context = [];
         this.userAnswers.clear();
@@ -193,6 +221,8 @@ class ChatLogic {
         this.followUpQuestions.clear();
         this.conversationDepth.clear();
         this.questionBank.reset();
+        this.completedTopics.clear();
+        this.isChoosingNewTopic = false;
     }
 
     async generateTransition(currentQuestion, nextQuestion, lastAnswer) {
@@ -207,13 +237,27 @@ class ChatLogic {
     }
 
     async suggestNextTopic() {
+        console.log('suggestNextTopic被调用');
+        console.log('当前完成的主题:', this.completedTopics);
+        
         const allTopics = ['personalGrowth', 'future', 'relationship', 'career'];
         const remainingTopics = allTopics.filter(topic => !this.completedTopics.has(topic));
         
+        console.log('剩余主题:', remainingTopics);
+
         if (remainingTopics.length === 0) {
+            console.log('没有剩余主题，准备生成总结');
             this.isGeneratingSummary = true;
             return await this.generateFinalSummary();
         }
+
+        this.isChoosingNewTopic = true;
+        this.currentTopic = null;
+
+        console.log('设置状态:', {
+            isChoosingNewTopic: this.isChoosingNewTopic,
+            currentTopic: this.currentTopic
+        });
 
         const topicNames = {
             personalGrowth: '个人成长',
@@ -221,9 +265,6 @@ class ChatLogic {
             relationship: '情感生活',
             career: '职业发展'
         };
-
-        this.isChoosingNewTopic = true;
-        this.currentTopic = null;
 
         const suggestions = remainingTopics
             .map(topic => `${topicNames[topic]}`)
@@ -233,12 +274,16 @@ class ChatLogic {
     }
 
     async generateFinalSummary() {
+        console.log('生成总结报告，当前答案:', this.userAnswers);
+        
         const allAnswers = Array.from(this.userAnswers.entries())
             .map(([topic, answers]) => ({
                 topic,
-                answers
+                answers: Array.isArray(answers) ? answers : [answers]
             }));
-
+            
+        console.log('格式化后的答案:', allAnswers);
+        
         return await this.aiService.generateFinalSummary(allAnswers);
     }
 } 

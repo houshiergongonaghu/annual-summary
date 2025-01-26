@@ -1,6 +1,7 @@
 class AIService {
     constructor() {
         this.API_URL = '/api/chat';
+        this.isLoading = false;
         
         this.systemPrompt = `你是一位名叫胖虎的年度总结分析师，是一个温暖、真诚的对话伙伴。
 
@@ -58,14 +59,25 @@ class AIService {
         };
     }
 
-    async getResponse(text, context, isFollowUp = false) {
-        this.isLoading = true;
-        
+    async getResponse(text, context, isFollowUp = false, isSummary = false) {
         try {
-            // 根据是否是跟进对话调整prompt
-            const prompt = isFollowUp ? 
-                this.generateFollowUpPrompt(text, context) :
-                this.generateNormalPrompt(text, context);
+            console.log('发送API请求:', {
+                text,
+                context,
+                isSummary
+            });
+
+            this.isLoading = true;
+            
+            // 根据不同情况生成 prompt
+            let prompt;
+            if (isSummary) {
+                prompt = text;  // 如果是生成总结，直接使用传入的文本作为 prompt
+            } else {
+                prompt = isFollowUp ? 
+                    this.generateFollowUpPrompt(text, context) :
+                    this.generateNormalPrompt(text, context);
+            }
 
             const messages = [
                 {
@@ -87,10 +99,14 @@ class AIService {
                 body: JSON.stringify({ messages })
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             
-            if (!response.ok) {
-                throw new Error(data.error || '请求失败');
+            if (data.error) {
+                throw new Error(data.error);
             }
 
             const aiResponse = data.choices[0].message.content;
@@ -99,8 +115,8 @@ class AIService {
 
         } catch (error) {
             this.isLoading = false;
-            console.error('AI响应错误:', error);
-            throw error;
+            console.error('API请求错误:', error);
+            return '抱歉，处理请求时出现错误。请稍后重试。';
         }
     }
 
@@ -128,7 +144,12 @@ ${recentContext.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
     // 生成常规对话的prompt
     generateNormalPrompt(text, context) {
         const currentTopic = this._getCurrentTopic(context);
-        const strategy = this.dialogueStrategies[currentTopic];
+        // 添加默认策略，防止 strategy 为 undefined
+        const strategy = this.dialogueStrategies[currentTopic] || {
+            style: '温暖真诚',
+            focus: '整体表现',
+            emphasis: ['成长', '收获', '展望']
+        };
         
         return `作为一个${strategy.style}的对话伙伴，请对用户的分享："${text}"生成回应。
 
@@ -213,13 +234,12 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
     }
 
     async generateFinalSummary(allAnswers) {
-        const summaryPrompt = `请根据用户在不同方向的分享，生成一份全面的年度总结报告。
+        try {
+            console.log('开始生成最终总结');
+            this.isLoading = true;
 
-用户的分享内容：
-${allAnswers.map(({topic, answers}) => `
-${this.getTopicName(topic)}:
-${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n')}
-`).join('\n')}
+            const summaryPrompt = `请根据用户在不同方向的分享，生成一份全面的年度总结报告。
+用户的分享内容：${JSON.stringify(allAnswers, null, 2)}
 
 要求：
 1. 分析用户在各个方向的表现和特点
@@ -248,7 +268,44 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n')}
 💪 未来展望
 [给出温暖有力的鼓励]`;
 
-        return await this.getResponse(summaryPrompt, []);
+            // 直接调用 getResponse，不使用 generateNormalPrompt
+            const messages = [
+                {
+                    role: 'system',
+                    content: this.systemPrompt
+                },
+                {
+                    role: 'user',
+                    content: summaryPrompt
+                }
+            ];
+
+            const response = await fetch(this.API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ messages })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.isLoading = false;
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            return data.choices[0].message.content;
+
+        } catch (error) {
+            this.isLoading = false;
+            console.error('生成总结报告错误:', error);
+            return '抱歉，生成总结报告时出现错误。请稍后重试。';
+        }
     }
 
     getTopicName(topic) {

@@ -13,6 +13,8 @@ app.use(express.static('public'));
 // API代理路由
 app.post('/api/chat', async (req, res) => {
     try {
+        console.log('收到API请求:', req.body);
+
         const response = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
             headers: {
@@ -30,11 +32,20 @@ app.post('/api/chat', async (req, res) => {
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Deepseek API responded with status: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log('API响应:', data);
         res.json(data);
+
     } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('API错误:', error);
+        res.status(500).json({
+            error: '处理请求时出现错误',
+            details: error.message
+        });
     }
 });
 
