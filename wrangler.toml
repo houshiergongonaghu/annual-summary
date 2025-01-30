@@ -1,0 +1,49 @@
+# 项目基本信息
+name = "annual-summary-api"
+main = "worker/index.js"
+compatibility_date = "2024-01-01"
+
+# 智能部署配置
+[placement]
+mode = "smart"
+
+# 构建配置
+[build]
+command = "" # 如果需要构建命令可以在这里添加
+[build.upload]
+format = "modules"
+
+# 环境变量配置
+[vars]
+DEEPSEEK_API_BASE_URL = "https://api.deepseek.com/chat/completions"  # 修正API URL
+
+# 速率限制配置
+[rate_limits]
+requests_per_minute = 50  # 每分钟请求限制
+
+# 生产环境配置
+[env.production]
+name = "annual-summary-api"
+routes = [
+    { pattern = "annual-summary-api.daisyquanzhixian.workers.dev", custom_domain = true }
+]
+workers_dev = true  # 启用workers.dev子域名
+
+# 开发环境配置
+[env.development]
+name = "annual-summary-api-dev"
+workers_dev = true
+
+# 缓存配置
+[cache]
+browser_ttl = 0  # 禁用浏览器缓存
+edge_ttl = 60  # 边缘缓存60秒
+
+# 自定义域名绑定(可选)
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_id = "your_zone_id"  # 在Cloudflare控制台查看
+
+# 日志配置
+[logs]
+debug = true  # 开发环境启用调试日志 

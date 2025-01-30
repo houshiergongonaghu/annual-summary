@@ -1,6 +1,6 @@
 class AIService {
     constructor() {
-        this.API_URL = '/api/chat';
+        this.API_URL = 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         this.isLoading = false;
         
         this.systemPrompt = `你是一位名叫胖虎的年度总结分析师，是一个温暖、真诚的对话伙伴。
@@ -61,18 +61,22 @@ class AIService {
 
     async getResponse(text, context, isFollowUp = false, isSummary = false) {
         try {
-            console.log('发送API请求:', {
-                text,
-                context,
-                isSummary
+            // 添加详细的请求日志
+            console.log('完整请求信息:', {
+                请求序号: new Date().getTime(),
+                文本内容: text,
+                上下文长度: context?.length,
+                上下文内容: context,
+                是否跟进: isFollowUp,
+                是否总结: isSummary,
+                API地址: this.API_URL
             });
 
             this.isLoading = true;
             
-            // 根据不同情况生成 prompt
             let prompt;
             if (isSummary) {
-                prompt = text;  // 如果是生成总结，直接使用传入的文本作为 prompt
+                prompt = text;
             } else {
                 prompt = isFollowUp ? 
                     this.generateFollowUpPrompt(text, context) :
@@ -91,6 +95,9 @@ class AIService {
                 }
             ];
 
+            // 打印完整的请求体
+            console.log('发送到API的完整消息:', JSON.stringify(messages, null, 2));
+
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
@@ -99,12 +106,25 @@ class AIService {
                 body: JSON.stringify({ messages })
             });
 
+            // 添加响应状态日志
+            console.log('API响应状态:', {
+                状态码: response.status,
+                状态文本: response.statusText,
+                响应头: Object.fromEntries(response.headers)
+            });
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                console.error('API错误响应详情:', {
+                    错误文本: errorText,
+                    状态码: response.status
+                });
+                throw new Error(`API请求失败(${response.status}): ${errorText}`);
             }
 
             const data = await response.json();
-            
+            console.log('API成功响应:', data);
+
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -115,8 +135,19 @@ class AIService {
 
         } catch (error) {
             this.isLoading = false;
-            console.error('API请求错误:', error);
-            return '抱歉，处理请求时出现错误。请稍后重试。';
+            console.error('API请求完整错误:', {
+                错误信息: error.message,
+                错误栈: error.stack,
+                错误类型: error.name,
+                API地址: this.API_URL,
+                当前状态: {
+                    isLoading: this.isLoading,
+                    hasContext: !!context,
+                    isFollowUp,
+                    isSummary
+                }
+            });
+            return `抱歉，处理请求时出现错误: ${error.message}。请检查控制台获取详细信息。`;
         }
     }
 
