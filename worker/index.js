@@ -39,6 +39,7 @@ export default {
 
         // 主聊天端点
         if (url.pathname === '/api/chat') {
+            console.log('=========/api/chat:');
             // 只允许POST方法
             if (request.method !== 'POST') {
                 return new Response(
