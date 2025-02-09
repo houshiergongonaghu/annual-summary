@@ -18,9 +18,6 @@ export default {
             });
         }
 
-        // 路由处理
-        const url = new URL(request.url);
-        
         // API测试端点
         if (url.pathname === '/api/test') {
             return new Response(
