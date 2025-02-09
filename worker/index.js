@@ -2,19 +2,19 @@ export default {
     async fetch(request, env) {
         // 允许跨域配置
         const corsHeaders = {
-            'Access-Control-Allow-Origin': 'https://ee4c3b30.annualsummary.pages.dev',  // 修改这里，使用具体的前端域名
+            'Access-Control-Allow-Origin': 'https://annualsummary.pages.dev',  // 更新为实际的前端域名
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Max-Age': '86400',
         };
 
+        // 获取请求URL
+        const url = new URL(request.url);
+
         // 处理 OPTIONS 预检请求
         if (request.method === 'OPTIONS') {
             return new Response(null, {
-                headers: {
-                    ...corsHeaders,
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                }
+                headers: corsHeaders
             });
         }
 
