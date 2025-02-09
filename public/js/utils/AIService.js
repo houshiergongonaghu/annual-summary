@@ -2,7 +2,7 @@ console.log('AIService.js 已加载');
 
 class AIService {
     constructor() {
-        // 确保使用正确的Worker URL
+        // 使用完整的API URL
         this.API_URL = 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         this.isLoading = false;
         
@@ -89,62 +89,72 @@ class AIService {
                     this.generateNormalPrompt(text, context);
             }
 
-            // 构建完整的对话历史
+            // 打印实际发送的消息
             const messages = [
                 {
                     role: 'system',
                     content: this.systemPrompt
+                },
+                ...context,
+                { 
+                    role: 'user', 
+                    content: prompt 
                 }
             ];
-
-            // 正确添加历史对话上下文
-            if (context && Array.isArray(context)) {
-                messages.push(...context);
-            }
-
-            // 添加当前问题
-            messages.push({ 
-                role: 'user', 
-                content: prompt 
-            });
 
             console.log('发送的完整消息:', JSON.stringify(messages, null, 2));
 
             // 发送请求
+            console.log('正在发送到:', this.API_URL);
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ 
-                    messages,
-                    model: 'deepseek-chat',  // 明确指定模型
-                    temperature: 0.7,         // 添加温度参数
-                    max_tokens: 2000          // 设置最大token
-                })
+                mode: 'cors',
+                credentials: 'omit',
+                body: JSON.stringify({ messages })
             });
 
-            // 检查响应状态
+            // 详细的响应日志
+            console.log('收到响应:', {
+                状态: response.status,
+                状态文本: response.statusText,
+                头信息: Object.fromEntries(response.headers.entries()),
+                ok: response.ok
+            });
+
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || '请求失败');
+                // 尝试读取错误响应
+                const errorText = await response.text();
+                console.error('请求失败:', {
+                    状态码: response.status,
+                    错误信息: errorText
+                });
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
 
             const data = await response.json();
-            this.isLoading = false;
+            console.log('响应数据:', data);
 
-            // 确保返回正确的响应内容
-            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                throw new Error('无效的API响应格式');
+            if (data.error) {
+                throw new Error(data.error);
             }
 
-            return data.choices[0].message.content;
+            const aiResponse = data.choices[0].message.content;
+            this.isLoading = false;
+            return aiResponse;
 
         } catch (error) {
             this.isLoading = false;
-            console.error('API请求错误:', error);
-            throw error; // 向上传递错误，让调用者处理
+            console.error('API请求失败:', {
+                错误类型: error.name,
+                错误信息: error.message,
+                错误堆栈: error.stack,
+                请求URL: this.API_URL
+            });
+            throw error;
         }
     }
 
@@ -386,24 +396,13 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
     }
 
     async generateResponse(question, answer, context, isLastQuestion = false) {
-        try {
-            const currentContext = Array.isArray(context) ? context : [];
-            
-            // 添加用户的问答到上下文
-            currentContext.push({
-                role: 'user',
-                content: `问题：${question}\n我的回答：${answer}`
-            });
+        const prompt = `${this.systemPrompt}\n\n当前问题：${question}\n用户回答：${answer}\n\n${
+            isLastQuestion ? 
+            '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
+            '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。'
+        }`;
 
-            const prompt = isLastQuestion ?
-                `请对这个方向的对话进行总结，并给出建议和启发。` :
-                `请对用户的回答进行回应，并自然地引导到下一个问题。`;
-
-            return await this.getResponse(prompt, currentContext, true, isLastQuestion);
-        } catch (error) {
-            console.error('生成回应错误:', error);
-            throw error;
-        }
+        return await this.getResponse(prompt, context);
     }
 }
 
