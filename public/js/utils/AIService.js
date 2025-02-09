@@ -1,5 +1,8 @@
+console.log('AIService.js 已加载');
+
 class AIService {
     constructor() {
+        // 确保使用正确的Worker URL
         this.API_URL = 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         this.isLoading = false;
         
@@ -57,73 +60,60 @@ class AIService {
                 emphasis: ['职业规划', '能力建设', '价值实现']
             }
         };
+
+        // 添加请求超时设置
+        this.timeout = 30000; // 30秒
     }
 
-    async getResponse(text, context, isFollowUp = false, isSummary = false) {
+    async getResponse(prompt, context = []) {
+        if (this.isLoading) {
+            return '正在处理上一个请求，请稍候...';
+        }
+        this.isLoading = true;
+
         try {
-            // 添加详细的请求日志
-            console.log('完整请求信息:', {
-                请求序号: new Date().getTime(),
-                文本内容: text,
-                上下文长度: context?.length,
-                上下文内容: context,
-                是否跟进: isFollowUp,
-                是否总结: isSummary,
-                API地址: this.API_URL
-            });
-
-            this.isLoading = true;
-            
-            let prompt;
-            if (isSummary) {
-                prompt = text;
-            } else {
-                prompt = isFollowUp ? 
-                    this.generateFollowUpPrompt(text, context) :
-                    this.generateNormalPrompt(text, context);
-            }
-
+            // 构建完整的消息历史
             const messages = [
-                {
-                    role: 'system',
-                    content: this.systemPrompt
-                },
-                ...context,
-                { 
-                    role: 'user', 
-                    content: prompt 
-                }
+                { role: "system", content: this.systemPrompt },
+                ...context,  // 添加之前的对话历史
+                { role: "user", content: prompt }
             ];
 
-            // 打印完整的请求体
-            console.log('发送到API的完整消息:', JSON.stringify(messages, null, 2));
+            console.log('发送到API的消息:', messages); // 调试日志
 
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ messages })
+                body: JSON.stringify({ 
+                    messages,
+                    model: 'deepseek-chat',
+                    max_tokens: 2000,
+                    temperature: 0.7
+                })
             });
 
-            // 添加响应状态日志
-            console.log('API响应状态:', {
-                状态码: response.status,
+            // 详细的响应日志
+            console.log('收到响应:', {
+                状态: response.status,
                 状态文本: response.statusText,
-                响应头: Object.fromEntries(response.headers)
+                头信息: Object.fromEntries(response.headers.entries()),
+                ok: response.ok
             });
 
             if (!response.ok) {
+                // 尝试读取错误响应
                 const errorText = await response.text();
-                console.error('API错误响应详情:', {
-                    错误文本: errorText,
-                    状态码: response.status
+                console.error('请求失败:', {
+                    状态码: response.status,
+                    错误信息: errorText
                 });
-                throw new Error(`API请求失败(${response.status}): ${errorText}`);
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
 
             const data = await response.json();
-            console.log('API成功响应:', data);
+            console.log('响应数据:', data);
 
             if (data.error) {
                 throw new Error(data.error);
@@ -135,19 +125,13 @@ class AIService {
 
         } catch (error) {
             this.isLoading = false;
-            console.error('API请求完整错误:', {
-                错误信息: error.message,
-                错误栈: error.stack,
+            console.error('API请求失败:', {
                 错误类型: error.name,
-                API地址: this.API_URL,
-                当前状态: {
-                    isLoading: this.isLoading,
-                    hasContext: !!context,
-                    isFollowUp,
-                    isSummary
-                }
+                错误信息: error.message,
+                错误堆栈: error.stack,
+                请求URL: this.API_URL
             });
-            return `抱歉，处理请求时出现错误: ${error.message}。请检查控制台获取详细信息。`;
+            throw error;
         }
     }
 
@@ -389,12 +373,26 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
     }
 
     async generateResponse(question, answer, context, isLastQuestion = false) {
-        const prompt = `${this.systemPrompt}\n\n当前问题：${question}\n用户回答：${answer}\n\n${
+        // 构建新的消息
+        const newContext = [...(context || [])];
+        if (question && answer) {
+            newContext.push(
+                { role: "user", content: question },
+                { role: "assistant", content: answer }
+            );
+        }
+
+        const prompt = `${
             isLastQuestion ? 
             '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
             '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。'
-        }`;
+        }\n\n当前问题：${question}\n用户回答：${answer}`;
 
-        return await this.getResponse(prompt, context);
+        return await this.getResponse(prompt, newContext);
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.aiService = new AIService();
+    console.log('AIService 已实例化:', window.aiService);
 } 
