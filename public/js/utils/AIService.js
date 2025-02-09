@@ -2,7 +2,7 @@ console.log('AIService.js 已加载');
 
 class AIService {
     constructor() {
-        // 使用正确的Worker API地址
+        // 使用完整的API URL
         this.API_URL = 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         this.isLoading = false;
         
@@ -65,95 +65,62 @@ class AIService {
         this.timeout = 30000; // 30秒
     }
 
-    async getResponse(text, context, isFollowUp = false, isSummary = false) {
+    async getResponse(text, context = [], isFollowUp = false, isSummary = false) {
         try {
-            // 添加请求前的日志
-            console.log('发送请求到Worker:', {
-                url: this.API_URL,
-                请求内容: {
-                    text,
-                    context,
-                    isFollowUp,
-                    isSummary
-                }
-            });
-
             this.isLoading = true;
             
-            let prompt;
-            if (isSummary) {
-                prompt = text;
-            } else {
-                prompt = isFollowUp ? 
-                    this.generateFollowUpPrompt(text, context) :
-                    this.generateNormalPrompt(text, context);
-            }
-
-            // 打印实际发送的消息
+            // 构建messages数组
             const messages = [
                 {
                     role: 'system',
                     content: this.systemPrompt
-                },
-                ...context,
-                { 
-                    role: 'user', 
-                    content: prompt 
                 }
             ];
 
-            console.log('发送的完整消息:', JSON.stringify(messages, null, 2));
+            // 添加上下文消息
+            if (Array.isArray(context) && context.length > 0) {
+                messages.push(...context);
+            }
+
+            // 添加当前问题
+            messages.push({
+                role: 'user',
+                content: text
+            });
+
+            // 打印请求信息
+            console.log('发送请求:', {
+                url: this.API_URL,
+                messages: messages
+            });
 
             // 发送请求
-            console.log('正在发送到:', this.API_URL);
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Content-Type': 'application/json'
                 },
-                mode: 'cors',
-                credentials: 'omit',
-                body: JSON.stringify({ messages })
+                body: JSON.stringify({
+                    messages,
+                    model: 'deepseek-chat',
+                    temperature: 0.7,
+                    max_tokens: 2000
+                })
             });
 
-            // 详细的响应日志
-            console.log('收到响应:', {
-                状态: response.status,
-                状态文本: response.statusText,
-                头信息: Object.fromEntries(response.headers.entries()),
-                ok: response.ok
-            });
-
+            // 检查响应
             if (!response.ok) {
-                // 尝试读取错误响应
-                const errorText = await response.text();
-                console.error('请求失败:', {
-                    状态码: response.status,
-                    错误信息: errorText
-                });
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || '请求失败');
             }
 
             const data = await response.json();
-            console.log('响应数据:', data);
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            const aiResponse = data.choices[0].message.content;
             this.isLoading = false;
-            return aiResponse;
 
+            return data.choices[0].message.content;
         } catch (error) {
             this.isLoading = false;
-            console.error('API请求失败:', {
-                错误类型: error.name,
-                错误信息: error.message,
-                错误堆栈: error.stack,
-                请求URL: this.API_URL
-            });
+            console.error('API请求错误:', error);
             throw error;
         }
     }
@@ -396,13 +363,30 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
     }
 
     async generateResponse(question, answer, context, isLastQuestion = false) {
-        const prompt = `${this.systemPrompt}\n\n当前问题：${question}\n用户回答：${answer}\n\n${
-            isLastQuestion ? 
-            '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
-            '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。'
-        }`;
+        try {
+            // 确保context是数组
+            const currentContext = Array.isArray(context) ? context : [];
+            
+            // 构建新的消息
+            const newMessage = {
+                role: 'user',
+                content: `问题：${question}\n用户回答：${answer}`
+            };
+            
+            // 构建完整上下文
+            const fullContext = [...currentContext, newMessage];
+            
+            // 构建提示词
+            const prompt = isLastQuestion ? 
+                '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
+                '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。';
 
-        return await this.getResponse(prompt, context);
+            // 调用API
+            return await this.getResponse(prompt, fullContext, true, isLastQuestion);
+        } catch (error) {
+            console.error('生成回应错误:', error);
+            throw error;
+        }
     }
 }
 
