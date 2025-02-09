@@ -2,19 +2,22 @@ export default {
     async fetch(request, env) {
         // 允许跨域配置
         const corsHeaders = {
-            'Access-Control-Allow-Origin': '*',  // 生产环境建议设置具体域名
+            'Access-Control-Allow-Origin': 'https://ee4c3b30.annualsummary.pages.dev',  // 生产环境建议设置具体域名
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Max-Age': '86400',  // 缓存预检请求结果24小时
         };
 
-        // 处理预检请求
+      // 处理 OPTIONS 预检请求
         if (request.method === 'OPTIONS') {
-            return new Response(null, { 
-                headers: corsHeaders,
-                status: 204
+            return new Response(null, {
+                headers: {
+                    ...corsHeaders,
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                }
             });
         }
+
 
         // 路由处理
         const url = new URL(request.url);
