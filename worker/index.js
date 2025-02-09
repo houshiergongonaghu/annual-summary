@@ -2,13 +2,13 @@ export default {
     async fetch(request, env) {
         // 允许跨域配置
         const corsHeaders = {
-            'Access-Control-Allow-Origin': 'https://ee4c3b30.annualsummary.pages.dev',  // 生产环境建议设置具体域名
+            'Access-Control-Allow-Origin': 'https://ee4c3b30.annualsummary.pages.dev',  // 修改这里，使用具体的前端域名
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-            'Access-Control-Max-Age': '86400',  // 缓存预检请求结果24小时
+            'Access-Control-Max-Age': '86400',
         };
 
-      // 处理 OPTIONS 预检请求
+        // 处理 OPTIONS 预检请求
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 headers: {
@@ -17,7 +17,6 @@ export default {
                 }
             });
         }
-
 
         // 路由处理
         const url = new URL(request.url);
@@ -28,7 +27,13 @@ export default {
                 JSON.stringify({
                     status: 'ok',
                     config: {
-                        hasApiKey: !!env.DEEPSEEK_API_KEY
+                        hasApiKey: !!env.DEEPSEEK_API_KEY,
+                        hasBaseUrl: !!env.DEEPSEEK_API_BASE_URL,
+                        // 不要返回实际的值，只返回是否存在
+                        environment: {
+                            DEEPSEEK_API_KEY: !!env.DEEPSEEK_API_KEY,
+                            DEEPSEEK_API_BASE_URL: !!env.DEEPSEEK_API_BASE_URL
+                        }
                     }
                 }),
                 {
@@ -42,7 +47,6 @@ export default {
 
         // 主聊天端点
         if (url.pathname === '/api/chat') {
-            console.log('=========/api/chat:');
             // 只允许POST方法
             if (request.method !== 'POST') {
                 return new Response(
@@ -58,20 +62,39 @@ export default {
             }
 
             try {
+                // 打印请求信息
+                console.log('收到请求:', {
+                    method: request.method,
+                    headers: Object.fromEntries(request.headers.entries()),
+                    url: request.url
+                });
+
                 // 验证API密钥
                 if (!env.DEEPSEEK_API_KEY) {
                     throw new Error('API key not configured');
                 }
 
+                // 验证API基础URL
+                if (!env.DEEPSEEK_API_BASE_URL.includes('/v1/')) {
+                    console.warn('API URL 可能缺少版本号，当前URL:', env.DEEPSEEK_API_BASE_URL);
+                }
+
                 // 解析请求数据
                 const data = await request.json();
+                console.log('请求数据:', data);
                 
                 // 验证请求数据
                 if (!data.messages || !Array.isArray(data.messages)) {
                     throw new Error('Invalid request format');
                 }
 
-                // 调用Deepseek API
+                // 调用Deepseek API前的日志
+                console.log('准备调用Deepseek API:', {
+                    url: env.DEEPSEEK_API_BASE_URL,
+                    hasApiKey: !!env.DEEPSEEK_API_KEY,
+                    requestBody: data
+                });
+
                 const response = await fetch(env.DEEPSEEK_API_BASE_URL, {
                     method: 'POST',
                     headers: {
@@ -86,10 +109,18 @@ export default {
                     })
                 });
 
+                // 打印响应信息
+                console.log('Deepseek API响应:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+
                 // 检查API响应
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error?.message || 'API request failed');
+                    console.error('Deepseek API错误:', error);
+                    throw new Error(`Deepseek API错误: ${error.error?.message || '未知错误'}`);
                 }
 
                 const result = await response.json();
@@ -100,23 +131,21 @@ export default {
                     {
                         headers: {
                             ...corsHeaders,
-                            'Content-Type': 'application/json',
-                            'Cache-Control': 'no-cache'  // 禁用缓存
+                            'Content-Type': 'application/json'
                         }
                     }
                 );
 
             } catch (error) {
-                // 错误处理
-                console.error('Error in chat endpoint:', error);
-                
+                console.error('详细错误信息:', {
+                    错误名称: error.name,
+                    错误消息: error.message,
+                    错误堆栈: error.stack
+                });
                 return new Response(
-                    JSON.stringify({
-                        error: error.message || 'Internal server error',
-                        timestamp: new Date().toISOString()
-                    }),
+                    JSON.stringify({ error: error.message }),
                     {
-                        status: error.status || 500,
+                        status: 500,
                         headers: {
                             ...corsHeaders,
                             'Content-Type': 'application/json'
@@ -138,4 +167,4 @@ export default {
             }
         );
     }
-}; 
+};
