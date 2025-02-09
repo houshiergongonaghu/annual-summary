@@ -2,7 +2,7 @@ console.log('AIService.js 已加载');
 
 class AIService {
     constructor() {
-        // 使用完整的API URL
+        // 使用正确的API URL
         this.API_URL = 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         this.isLoading = false;
         
