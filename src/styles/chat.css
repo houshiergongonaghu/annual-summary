@@ -1,0 +1,10 @@
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+/* 其他聊天相关的样式 */ 

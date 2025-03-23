@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deepseek API 测试</title>
+    <style>
+        body { padding: 20px; font-family: sans-serif; }
+        .log { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Deepseek API 测试</h2>
+    <button onclick="testAPI()">测试 API 连接</button>
+    <div id="logs"></div>
+
+    <script src="js/utils/AIService.js"></script>
+    <script>
+        function addLog(message, isError = false) {
+            const log = document.createElement('div');
+            log.className = `log ${isError ? 'error' : 'success'}`;
+            log.textContent = message;
+            document.getElementById('logs').prepend(log);
+        }
+
+        async function testAPI() {
+            const aiService = new AIService();
+            try {
+                addLog('开始测试 API...');
+                const response = await aiService.getResponse(
+                    'TEST_API: 请回复一个包含当前时间的JSON格式消息'
+                );
+                addLog('API 响应成功: ' + response);
+            } catch (error) {
+                addLog('API 测试失败: ' + error.message, true);
+            }
+        }
+    </script>
+</body>
+</html>

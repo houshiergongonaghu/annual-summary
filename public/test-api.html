@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API测试</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        pre { background: #f0f0f0; padding: 10px; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>API连接测试</h1>
+    <button onclick="testAPI()">测试API连接</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '测试中...';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {role: 'system', content: '你是一个助手'},
+                            {role: 'user', content: '请回复一个简短的测试消息'}
+                        ],
+                        model: 'deepseek-chat',
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API错误: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                result.innerHTML = `<div class="success">API连接成功!</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">API连接失败: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html> 

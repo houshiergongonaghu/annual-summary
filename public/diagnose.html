@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API 诊断工具</title>
+    <style>
+        .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .pending { color: orange; }
+    </style>
+</head>
+<body>
+    <h2>API 诊断工具</h2>
+    <div id="tests">
+        <div class="test-item" id="network-test">
+            <h3>1. 网络连接测试</h3>
+            <div class="result">等待测试...</div>
+        </div>
+        <div class="test-item" id="api-key-test">
+            <h3>2. API密钥检查</h3>
+            <div class="result">等待测试...</div>
+        </div>
+        <div class="test-item" id="api-service-test">
+            <h3>3. API服务测试</h3>
+            <div class="result">等待测试...</div>
+        </div>
+    </div>
+    <button onclick="runDiagnosis()">开始诊断</button>
+    <div id="logs"></div>
+
+    <script>
+        async function runDiagnosis() {
+            // 重置结果
+            document.querySelectorAll('.result').forEach(el => {
+                el.textContent = '测试中...';
+                el.className = 'result pending';
+            });
+
+            // 1. 网络连接测试
+            try {
+                const networkTest = await fetch('https://api.deepseek.com', {
+                    method: 'HEAD'
+                });
+                updateResult('network-test', true, 'API服务器可以访问');
+            } catch (error) {
+                updateResult('network-test', false, '无法连接到API服务器: ' + error.message);
+                return;
+            }
+
+            // 2. API密钥测试
+            try {
+                const keyTest = await fetch('/api/test');
+                const keyData = await keyTest.json();
+                if (keyData.config.hasApiKey) {
+                    updateResult('api-key-test', true, 'API密钥已配置');
+                } else {
+                    updateResult('api-key-test', false, 'API密钥未配置');
+                    return;
+                }
+            } catch (error) {
+                updateResult('api-key-test', false, '检查API密钥失败: ' + error.message);
+                return;
+            }
+
+            // 3. API服务测试
+            try {
+                const serviceTest = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: 'test'
+                        }]
+                    })
+                });
+                
+                const testData = await serviceTest.json();
+                if (serviceTest.ok) {
+                    updateResult('api-service-test', true, 'API服务正常');
+                } else {
+                    updateResult('api-service-test', false, `API服务错误: ${testData.error || '未知错误'}`);
+                }
+            } catch (error) {
+                updateResult('api-service-test', false, '调用API服务失败: ' + error.message);
+            }
+        }
+
+        function updateResult(id, success, message) {
+            const el = document.querySelector(`#${id} .result`);
+            el.textContent = message;
+            el.className = `result ${success ? 'success' : 'error'}`;
+        }
+
+        function addLog(message) {
+            const log = document.createElement('div');
+            log.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            document.getElementById('logs').prepend(log);
+        }
+    </script>
+</body>
+</html> 

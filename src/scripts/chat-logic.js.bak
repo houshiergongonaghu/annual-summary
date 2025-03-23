@@ -1,0 +1,44 @@
+export class ChatLogic {
+    constructor() {
+        this.questionBank = new QuestionBank();
+        this.aiService = new AIService();
+        this.currentDirection = null;
+        this.answerCount = 0;
+        this.currentDepth = 'shallow';
+    }
+
+    // 处理用户回答
+    async handleAnswer(answer) {
+        this.answerCount++;
+        
+        // 简单的深度判断
+        const isDetailedAnswer = answer.length > 50;
+        
+        // 如果回答详细,下一次问深层问题
+        if (isDetailedAnswer) {
+            this.currentDepth = 'deep';
+        }
+        
+        // 每回答3个问题切换方向
+        if (this.answerCount >= 3) {
+            this.switchDirection();
+            this.answerCount = 0;
+            this.currentDepth = 'shallow';
+        }
+        
+        return this.getNextQuestion();
+    }
+
+    // 切换方向
+    switchDirection() {
+        const directions = ['personalGrowth', 'career', 'relationship'];
+        const currentIndex = directions.indexOf(this.currentDirection);
+        const nextIndex = (currentIndex + 1) % directions.length;
+        this.currentDirection = directions[nextIndex];
+    }
+
+    // 获取下一个问题
+    getNextQuestion() {
+        return this.questionBank.getQuestion(this.currentDirection, this.currentDepth);
+    }
+} 

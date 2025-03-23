@@ -1,0 +1,4 @@
+# 在文件用途说明中添加
+file_purposes:
+  docs:
+    implementation-guide.md: "功能实现指导文档，包含具体的实现要求和建议" 

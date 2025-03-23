@@ -1,0 +1,126 @@
+/* 引入其他样式文件 */
+@import 'animations.css';
+@import 'chat.css';
+
+/* Reset 样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 全局样式 */
+:root {
+    --primary-color: #075e54;
+    --secondary-color: #128c7e;
+    --bg-color: #f0f2f5;
+    --chat-bg: #e5ddd5;
+    --message-bg: #dcf8c6;
+    --white: #ffffff;
+}
+
+body {
+    background: var(--bg-color);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* 通用布局类 */
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* 通用按钮样式 */
+.button {
+    border: none;
+    border-radius: 20px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* 其他全局样式 */ 
+
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.chat-header {
+    background: #075e54;
+    color: white;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #e5ddd5;
+}
+
+.message {
+    max-width: 80%;
+    margin: 10px 0;
+    padding: 10px 15px;
+    border-radius: 15px;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background: #dcf8c6;
+    margin-left: auto;
+    border-radius: 15px 15px 0 15px;
+}
+
+.ai-message {
+    background: white;
+    margin-right: auto;
+    border-radius: 15px 15px 15px 0;
+}
+
+.chat-input {
+    padding: 15px;
+    background: #f0f0f0;
+    display: flex;
+    gap: 10px;
+    border-radius: 0 0 8px 8px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+}
+
+.chat-input button {
+    padding: 10px 20px;
+    background: #075e54;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background: #128c7e;
+}
+
+.chat-input button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}

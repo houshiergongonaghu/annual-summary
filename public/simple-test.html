@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>简单API测试</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        #response { white-space: pre-wrap; background: #f0f0f0; padding: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>简单API测试</h1>
+    
+    <label for="prompt">输入一条消息:</label>
+    <textarea id="prompt">你好，请用几句话介绍自己</textarea>
+    
+    <button onclick="sendSimpleRequest()">发送简单请求</button>
+    <button onclick="sendAdvancedRequest()">发送完整格式请求</button>
+    
+    <div id="response">响应将显示在这里...</div>
+
+    <script>
+        async function sendSimpleRequest() {
+            const promptText = document.getElementById('prompt').value;
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerText = "请求中...";
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText })
+                });
+                
+                const data = await response.json();
+                responseDiv.innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.innerText = "错误: " + error.message;
+            }
+        }
+
+        async function sendAdvancedRequest() {
+            const promptText = document.getElementById('prompt').value;
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerText = "请求中...";
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'system', content: '你是一个友好的助手' },
+                            { role: 'user', content: promptText }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                responseDiv.innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.innerText = "错误: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html> 

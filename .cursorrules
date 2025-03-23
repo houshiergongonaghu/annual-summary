@@ -1,0 +1,194 @@
+# 项目结构规范
+root = annual-summary/
+src = ${root}/src
+
+# 目录结构
+required_directories:
+  - ${src}/components
+  - ${src}/styles
+  - ${src}/utils
+  - ${src}/scripts
+
+# 完整项目结构
+project_structure:
+  annual-summary/:           # 项目根目录
+    ├── src/                # 源代码目录
+    │   ├── components/     # UI组件
+    │   │   ├── chat-ui.js  # 聊天界面组件
+    │   │   └── message.js  # 消息组件
+    │   │
+    │   ├── styles/        # 样式文件
+    │   │   ├── main.css   # 主样式
+    │   │   ├── chat.css   # 聊天样式
+    │   │   └── animations.css # 动画效果
+    │   │
+    │   ├── utils/         # 工具函数
+    │   │   ├── ai-service.js    # AI服务
+    │   │   └── question-bank.js # 问题库
+    │   │
+    │   └── scripts/       # 核心逻辑
+    │       ├── chat-logic.js     # 对话控制
+    │       └── summary-generator.js # 总结生成
+    │
+    ├── public/            # 公共资源
+    │   ├── index.html     # 入口文件
+    │   └── favicon.ico    # 网站图标
+    │
+    ├── dist/              # 构建输出目录
+    │   └── ...           # 构建后的文件
+    │
+    ├── .cursorrules      # 项目规范
+    ├── package.json      # 项目配置
+    └── README.md         # 项目说明
+
+# 文件命名规范
+naming_convention:
+  - pattern: kebab-case
+  - prefix: no-prefix
+  - extension: .js, .css, .html
+
+# UI组件规范
+ui_components:
+  chat_container:
+    max_width: 800px
+    background: white
+    layout: flex
+    direction: column
+  
+  chat_header:
+    background: "#075e54"
+    color: white
+    padding: 15px
+  
+  message:
+    max_width: 80%
+    border_radius: 15px
+    padding: "10px 15px"
+    
+  ai_message:
+    background: white
+    border_radius: "0 15px 15px 15px"
+    
+  user_message:
+    background: "#dcf8c6"
+    border_radius: "15px 0 15px 15px"
+    
+  chat_input:
+    padding: 15px
+    background: "#f0f0f0"
+    layout: flex
+    gap: 10px
+
+# 样式规范
+styles:
+  colors:
+    primary: "#075e54"
+    secondary: "#128c7e"
+    background: "#f0f2f5"
+    message_bg: "#dcf8c6"
+  
+  fonts:
+    family: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"
+    size_base: 16px
+    line_height: 1.6
+
+# 功能模块规范
+modules:
+  ai_service:
+    file: ${src}/utils/ai-service.js
+    requirements:
+      - 支持多种AI模型切换
+      - 统一的请求接口
+      - 错误处理机制
+  
+  question_bank:
+    file: ${src}/utils/question-bank.js
+    requirements:
+      - 分类存储问题
+      - 随机获取问题
+      - 支持动态追加问题
+  
+  chat_logic:
+    file: ${src}/scripts/chat-logic.js
+    requirements:
+      - 灵活的对话流程控制
+      - 上下文管理
+      - 动态问答逻辑
+
+# 代码风格规范
+code_style:
+  javascript:
+    - 使用ES6+语法
+    - 类名使用PascalCase
+    - 方法名使用camelCase
+    - 必须处理异步错误
+  
+  css:
+    - 使用class选择器
+    - 避免使用!important
+    - 保持现有的样式类名
+
+# 注释规范
+comments:
+  required:
+    - 类的用途说明
+    - 复杂方法的功能说明
+    - 关键业务逻辑说明
+
+# 文件依赖规范
+dependencies:
+  - index.html 依赖所有js和css文件
+  - chat-logic.js 依赖 ai-service.js 和 question-bank.js
+  - 样式文件统一在main.css中引入
+
+# 开发规范
+development:
+  - 保持原有的UI/UX效果
+  - 只改进对话逻辑和AI集成
+  - 遵循模块化原则
+  - 保持代码简洁清晰
+
+# 禁止事项
+forbidden:
+  - 修改现有的UI布局结构
+  - 改变现有的样式主题
+  - 引入不必要的外部依赖
+  - 破坏现有的用户交互流程
+
+# 测试规范
+testing:
+  required:
+    - AI接口测试
+    - 对话逻辑测试
+    - UI交互测试
+
+# 版本控制
+version_control:
+  - 遵循语义化版本
+  - 提交信息要清晰明确
+  - 保持向后兼容
+
+# 文件用途说明
+file_purposes:
+  components:
+    chat-ui.js: "聊天界面的核心组件，包含消息展示和输入框"
+    message.js: "消息气泡组件，处理不同类型消息的展示"
+  
+  styles:
+    main.css: "全局样式定义"
+    chat.css: "聊天相关的样式"
+    animations.css: "动画效果定义"
+  
+  utils:
+    ai-service.js: "AI服务接口，处理与AI模型的交互"
+    question-bank.js: "问题库管理，包含问题的存储和获取"
+  
+  scripts:
+    chat-logic.js: "对话逻辑控制，处理用户输入和响应"
+    summary-generator.js: "总结生成器，处理年度总结的生成"
+
+# 文件依赖关系
+dependencies:
+  - index.html 依赖所有js和css文件
+  - chat-logic.js 依赖 ai-service.js 和 question-bank.js
+  - 样式文件统一在main.css中引入

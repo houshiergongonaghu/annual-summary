@@ -1,0 +1,11 @@
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 但保留示例文件
+!.env.example
+
+node_modules/
+dist/
+.DS_Store 

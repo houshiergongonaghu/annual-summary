@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API域名检查</title>
+    <style>
+        .result { margin: 10px 0; padding: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h2>API域名检查</h2>
+    <div>
+        <input type="text" id="apiUrl" value="https://api.deepseek.com" style="width: 300px;">
+        <button onclick="checkDomain()">检查域名</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        async function checkDomain() {
+            const url = document.getElementById('apiUrl').value;
+            const result = document.getElementById('result');
+            
+            try {
+                result.innerHTML = '正在检查...';
+                result.className = 'result';
+                
+                // 尝试不同的请求方式
+                const checks = [
+                    // 简单的HEAD请求
+                    fetch(url, { method: 'HEAD' }),
+                    // 带路径的请求
+                    fetch(`${url}/v1/chat/completions`, { method: 'HEAD' }),
+                    // 使用OPTIONS请求
+                    fetch(url, { method: 'OPTIONS' })
+                ];
+                
+                const results = await Promise.allSettled(checks);
+                
+                let success = false;
+                let messages = [];
+                
+                results.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        success = true;
+                        messages.push(`✅ 测试 ${index + 1} 成功`);
+                    } else {
+                        messages.push(`❌ 测试 ${index + 1} 失败: ${result.reason}`);
+                    }
+                });
+                
+                result.innerHTML = messages.join('<br>');
+                result.className = `result ${success ? 'success' : 'error'}`;
+                
+            } catch (error) {
+                result.innerHTML = `检查失败: ${error.message}`;
+                result.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html> 
