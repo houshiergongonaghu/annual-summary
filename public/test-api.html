@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>API测试</title>
+    <title>API Test</title>
     <style>
         body { font-family: Arial; padding: 20px; }
         pre { background: #f0f0f0; padding: 10px; border-radius: 5px; }
@@ -10,14 +10,14 @@
     </style>
 </head>
 <body>
-    <h1>API连接测试</h1>
-    <button onclick="testAPI()">测试API连接</button>
+    <h1>API Connection Test</h1>
+    <button onclick="testAPI()">Test API Connection</button>
     <div id="result"></div>
 
     <script>
         async function testAPI() {
             const result = document.getElementById('result');
-            result.innerHTML = '测试中...';
+            result.innerHTML = 'Testing...';
             
             try {
                 const response = await fetch('/api/chat', {
@@ -27,8 +27,8 @@
                     },
                     body: JSON.stringify({
                         messages: [
-                            {role: 'system', content: '你是一个助手'},
-                            {role: 'user', content: '请回复一个简短的测试消息'}
+                            {role: 'system', content: 'You are an assistant'},
+                            {role: 'user', content: 'Please reply with a short test message'}
                         ],
                         model: 'deepseek-chat',
                         temperature: 0.7,
@@ -38,13 +38,13 @@
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`API错误: ${response.status} - ${errorText}`);
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
-                result.innerHTML = `<div class="success">API连接成功!</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                result.innerHTML = `<div class="success">API connection successful!</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                result.innerHTML = `<div class="error">API连接失败: ${error.message}</div>`;
+                result.innerHTML = `<div class="error">API connection failed: ${error.message}</div>`;
                 console.error(error);
             }
         }

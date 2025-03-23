@@ -2,82 +2,82 @@ console.log('AIService.js 已加载');
 
 class AIService {
     constructor() {
-        // 检测是否在本地开发环境
+        // Check if in local development environment
         const isLocalDev = window.location.hostname === 'localhost' || 
                           window.location.hostname === '127.0.0.1';
         
-        // 根据环境选择API URL
+        // Choose API URL based on environment
         this.API_URL = isLocalDev 
-            ? '/api/chat'  // 本地开发URL (相对路径)
+            ? '/api/chat'  // Local development URL (relative path)
             : 'https://annual-summary-api.daisyquanzhixian.workers.dev/api/chat';
         
-        console.log('使用API URL:', this.API_URL);
+        console.log('Using API URL:', this.API_URL);
         this.isLoading = false;
         
-        this.systemPrompt = `你是一位名叫胖虎的年度总结分析师，是一个温暖、真诚的对话伙伴。
+        this.systemPrompt = `You are Tiger, an annual summary analyst who is a warm and sincere conversation partner.
 
-核心原则：
-1. 真诚共情：深入理解用户的情感和经历
-2. 个性化回应：针对用户的具体分享给出独特见解
-3. 循序渐进：通过自然的追问深入话题
-4. 平等对话：以朋友的身份交流，避免说教
+Core principles:
+1. Genuine empathy: Deeply understand the user's emotions and experiences
+2. Personalized responses: Provide unique insights for the user's specific sharing
+3. Progressive depth: Naturally deepen topics through follow-up questions
+4. Equal dialogue: Communicate as a friend, avoid lecturing
 
-对话策略：
-1. 回应用户时：
-- 首先对用户的分享表示理解和认可
-- 分享类似的经历或感受建立共鸣
-- 提出有深度的见解或建议
-- 用开放性问题自然引导深入
+Conversation strategies:
+1. When responding to users:
+- First express understanding and acknowledgment of their sharing
+- Share similar experiences or feelings to build rapport
+- Offer deep insights or suggestions
+- Use open-ended questions to naturally guide deeper conversation
 
-2. 话题切换时：
-- 找到当前话题和新话题的关联点
-- 解释为什么要聊这个新话题
-- 平滑过渡避免突兀
+2. When switching topics:
+- Find connections between current and new topics
+- Explain why the new topic is relevant
+- Transition smoothly to avoid abruptness
 
-3. 追问策略：
-- 针对用户提到的关键词展开
-- 引导用户说出具体的例子
-- 探讨背后的原因和感受
-- 帮助用户获得新的认知
+3. Follow-up question strategy:
+- Focus on key words mentioned by the user
+- Guide users to share specific examples
+- Explore underlying reasons and feelings
+- Help users gain new insights
 
-始终记住：每次回应都要：
-1. 体现真诚的理解
-2. 给出个性化的见解
-3. 自然地引导深入
-4. 保持对话的连贯性`;
+Always remember: Each response should:
+1. Demonstrate sincere understanding
+2. Provide personalized insights
+3. Naturally guide deeper conversation
+4. Maintain conversational coherence`;
 
         this.dialogueStrategies = {
             personalGrowth: {
-                focus: '个人成长和自我认知',
-                style: '鼓励性和启发性',
-                emphasis: ['能力提升', '心智成熟', '自我认知']
+                focus: 'Personal growth and self-awareness',
+                style: 'Encouraging and inspiring',
+                emphasis: ['Skill development', 'Mental maturity', 'Self-awareness']
             },
             future: {
-                focus: '未来规划和可能性',
-                style: '展望性和建设性',
-                emphasis: ['目标设定', '行动计划', '资源整合']
+                focus: 'Future planning and possibilities',
+                style: 'Forward-looking and constructive',
+                emphasis: ['Goal setting', 'Action plans', 'Resource integration']
             },
             relationship: {
-                focus: '情感连接和人际互动',
-                style: '温暖和理解性',
-                emphasis: ['情感体验', '关系模式', '沟通方式']
+                focus: 'Emotional connections and interpersonal interactions',
+                style: 'Warm and understanding',
+                emphasis: ['Emotional experiences', 'Relationship patterns', 'Communication methods']
             },
             career: {
-                focus: '职业发展和专业成长',
-                style: '专业性和实践性',
-                emphasis: ['职业规划', '能力建设', '价值实现']
+                focus: 'Career development and professional growth',
+                style: 'Professional and practical',
+                emphasis: ['Career planning', 'Skill building', 'Value realization']
             }
         };
 
-        // 添加请求超时设置
-        this.timeout = 30000; // 30秒
+        // Add request timeout setting
+        this.timeout = 30000; // 30 seconds
     }
 
     async getResponse(text, context = [], isFollowUp = false, isSummary = false) {
         try {
             this.isLoading = true;
             
-            // 构建messages数组
+            // Build messages array
             const messages = [
                 {
                     role: 'system',
@@ -85,24 +85,24 @@ class AIService {
                 }
             ];
 
-            // 添加上下文消息
+            // Add context messages
             if (Array.isArray(context) && context.length > 0) {
                 messages.push(...context);
             }
 
-            // 添加当前问题
+            // Add current question
             messages.push({
                 role: 'user',
                 content: text
             });
 
-            // 打印请求信息
-            console.log('发送请求:', {
+            // Log request information
+            console.log('Sending request:', {
                 url: this.API_URL,
                 messages: messages
             });
 
-            // 发送请求
+            // Send request
             const response = await fetch(this.API_URL, {
                 method: 'POST',
                 headers: {
@@ -116,10 +116,10 @@ class AIService {
                 })
             });
 
-            // 检查响应
+            // Check response
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || '请求失败');
+                throw new Error(errorData.error || 'Request failed');
             }
 
             const data = await response.json();
@@ -128,75 +128,75 @@ class AIService {
             return data.choices[0].message.content;
         } catch (error) {
             this.isLoading = false;
-            console.error('API请求错误:', error);
+            console.error('API request error:', error);
             throw error;
         }
     }
 
-    // 生成跟进问题的prompt
-    generateFollowUpPrompt(text, context) {
-        const recentContext = context.slice(-3); // 获取最近的对话上下文
-        
-        return `基于以下对话上下文：
-${recentContext.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
-
-用户刚才的回答是："${text}"
-
-请以朋友的身份生成一个自然的回应，包括：
-1. 对用户分享的理解和认可
-2. 分享相关的经历或感受(可选)
-3. 一个能够引导用户更深入思考和分享的问题
-
-注意：
-- 回应要体现出你真的理解和关心用户
-- 追问要自然，像朋友间的对话
-- 避免生硬的说教和客套话
-- 问题要具体，不要太宽泛`;
-    }
-
-    // 生成常规对话的prompt
+    // Generate prompt for normal conversation
     generateNormalPrompt(text, context) {
         const currentTopic = this._getCurrentTopic(context);
-        // 添加默认策略，防止 strategy 为 undefined
+        // Add default strategy to prevent strategy from being undefined
         const strategy = this.dialogueStrategies[currentTopic] || {
-            style: '温暖真诚',
-            focus: '整体表现',
-            emphasis: ['成长', '收获', '展望']
+            style: 'warm and sincere',
+            focus: 'overall performance',
+            emphasis: ['growth', 'achievements', 'outlook']
         };
         
-        return `作为一个${strategy.style}的对话伙伴，请对用户的分享："${text}"生成回应。
+        return `As a ${strategy.style} conversation partner, please generate a response to the user's sharing: "${text}".
 
-回应要求：
-1. 表达真诚的理解和认可
-2. 给出个性化的见解
-3. 分享相关的经历或感受
-4. 自然地引导继续交流
+Response requirements:
+1. Express genuine understanding and acknowledgment
+2. Provide personalized insights
+3. Share related experiences or feelings
+4. Naturally guide continued conversation
 
-重点关注：${strategy.focus}
-关键词：${strategy.emphasis.join(', ')}`;
+Focus on: ${strategy.focus}
+Keywords: ${strategy.emphasis.join(', ')}`;
     }
 
-    // 生成跟进问题
+    // Generate follow-up prompt
+    generateFollowUpPrompt(text, context) {
+        const recentContext = context.slice(-3); // Get recent conversation context
+        
+        return `Based on the following conversation context:
+${recentContext.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+User's recent answer was: "${text}"
+
+Please generate a natural response as a friend, including:
+1. Understanding and acknowledgment of the user's sharing
+2. Sharing related experiences or feelings (optional)
+3. A question that can naturally guide the user to think and share more
+
+Note:
+- The response should show that you truly understand and care about the user
+- The question should be natural, like a conversation between friends
+- Avoid hard-to-understand teaching or polite words
+- The question should be specific, not too broad`;
+    }
+
+    // Generate follow-up question
     async generateFollowUpQuestion(prompt) {
         try {
             const response = await this.getResponse(prompt, [], true);
-            // 确保返回的是一个问题
-            if (!response.endsWith('？') && !response.endsWith('?')) {
-                return response + '？';
+            // Ensure the response is a question
+            if (!response.endsWith('?') && !response.endsWith('?')) {
+                return response + '?';
             }
             return response;
         } catch (error) {
-            console.error('生成跟进问题错误:', error);
+            console.error('Error generating follow-up question:', error);
             throw error;
         }
     }
 
     _getCurrentTopic(context) {
         const topicKeywords = {
-            personalGrowth: ['个人成长', '自我提升', '能力提升'],
-            future: ['未来发展', '规划', '目标'],
-            relationship: ['情感生活', '关系', '沟通'],
-            career: ['职业发展', '工作', '事业']
+            personalGrowth: ['Personal growth', 'Self-improvement', 'Skill development'],
+            future: ['Future development', 'Planning', 'Goal'],
+            relationship: ['Emotional life', 'Relationship', 'Communication'],
+            career: ['Career development', 'Work', 'Career']
         };
 
         for (const msg of context.slice().reverse()) {
@@ -210,116 +210,116 @@ ${recentContext.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
     }
 
     async generateSummary(answers, topic) {
-        const summaryPrompt = `请根据以下问答内容，生成一份详细的年度总结报告。
-主题：${topic}
+        const summaryPrompt = `Please generate a detailed annual summary report based on the following question and answer content.
+Theme: ${topic}
 
-问答内容：
-${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
+Question and answer content:
+${answers.map(qa => `Question: ${qa.question}\nAnswer: ${qa.answer}`).join('\n\n')}
 
-要求：
-1. 报告要分析用户的具体情况
-2. 给出有深度的见解
-3. 提供实用的建议
-4. 用温暖鼓励的语气
-5. 适当使用emoji增加可读性
-6. 报告长度至少500字
-7. 分点列出主要发现和建议
+Requirements:
+1. The report should analyze the user's specific situation
+2. Provide deep insights
+3. Offer practical suggestions
+4. Use warm and encouraging tone
+5. Use emojis to increase readability
+6. The report should be at least 500 characters long
+7. List main findings and suggestions in points
 
-格式参考：
-📝 ${topic}年度总结报告
+Format reference:
+📝 ${topic} Annual Summary Report
 
-🌟 年度亮点
-[分析用户的主要成就和进步]
+🌟 Annual Highlights
+[Analyze the user's main achievements and progress]
 
-💡 关键发现
-[分析用户的具体情况]
+💡 Key Findings
+[Analyze the user's specific situation]
 
-📈 成长分析
-[深入分析用户的成长轨迹]
+📈 Growth Analysis
+[Deeply analyze the user's growth trajectory]
 
-🎯 建议展望
-[提供具体可行的建议]
+🎯 Suggestions for Outlook
+[Provide specific and feasible suggestions]
 
-💪 寄语
-[给出温暖有力的鼓励]`;
+💪 Encouragement
+[Give warm and encouraging encouragement]`;
 
         return await this.getResponse(summaryPrompt, []);
     }
 
     async generateFinalSummary(allAnswers) {
         try {
-            console.log('开始生成最终总结');
+            console.log('Starting to generate final summary');
             this.isLoading = true;
 
-            const summaryPrompt = `作为一位专业的年度总结分析师，请基于用户在不同方向的分享，生成一份深度洞察的年度总结报告。
+            const summaryPrompt = `As a professional annual summary analyst, please generate a deep insight annual summary report based on the user's sharing in different directions.
 
-用户的分享内容：${JSON.stringify(allAnswers, null, 2)}
+User's sharing content: ${JSON.stringify(allAnswers, null, 2)}
 
-分析要求：
-1. 多维度分析
-   - 分析用户在各个方向的表现特点
-   - 发现不同方向之间的内在联系
-   - 识别用户的核心价值观和行为模式
+Analysis requirements:
+1. Multi-dimensional analysis
+   - Analyze the user's performance characteristics in various directions
+   - Discover the internal connections between different directions
+   - Identify the user's core values and behavioral patterns
    
-2. 深度洞察
-   - 从用户的表达方式中解读性格特征
-   - 发现用户可能没有意识到的个人特质
-   - 揭示潜在的心理需求和动机
-   - 分析用户的决策倾向和思维方式
+2. Deep insight
+   - Interpret personality characteristics from the user's expression style
+   - Discover personal characteristics that the user may not be aware of
+   - Reveal potential psychological needs and motivations
+   - Analyze the user's decision-making tendencies and thinking style
    
-3. 个性化见解
-   - 找出用户独特的优势组合
-   - 发现用户特有的成长机会
-   - 提供有针对性的发展建议
+3. Personalized insights
+   - Identify the unique advantage combination of the user
+   - Discover the unique growth opportunities of the user
+   - Provide targeted development suggestions
    
-4. 跨领域关联
-   - 分析不同领域的经历如何相互影响
-   - 发现用户生活中的潜在模式
-   - 揭示个人发展的内在逻辑
+4. Cross-field association
+   - Analyze how the experiences in different fields affect each other
+   - Discover potential patterns in the user's life
+   - Reveal the inherent logic of personal development
 
-5. 前瞻性建议
-   - 基于深度分析提供建设性建议
-   - 指出潜在的发展机会
-   - 建议具体可行的行动方案
+5. Forward-looking suggestions
+   - Provide constructive suggestions based on deep analysis
+   - Identify potential development opportunities
+   - Suggest specific feasible action plans
 
-格式要求：
-📊 多维度分析报告
+Format requirements:
+📊 Multi-dimensional analysis report
 
-🔍 深度洞察
-- 核心特质解读
-- 潜在模式分析
-- 独特优势发现
-- 思维倾向剖析
+🔍 Deep insight
+- Core characteristic interpretation
+- Potential pattern analysis
+- Unique advantage discovery
+- Thinking style analysis
 
-💫 个人特质全景
-- 性格特征
-- 价值观取向
-- 决策风格
-- 成长倾向
+💫 Personal characteristic panoramic view
+- Personality characteristics
+- Value orientation
+- Decision style
+- Growth tendency
 
-🌟 潜力探索
-- 未被充分发挥的优势
-- 潜在发展机会
-- 可能的突破方向
+🌟 Potential exploration
+- Unutilized advantages
+- Potential development opportunities
+- Possible breakthrough directions
 
-🎯 精准建议
-- 针对性的提升方向
-- 具体的行动建议
-- 可能的发展路径
+🎯 Precise suggestions
+- Targeted improvement direction
+- Specific action suggestions
+- Possible development path
 
-💡 独特发现
-[分享一些用户可能没有意识到的，但从整体分析中发现的独特见解]
+💡 Unique discovery
+[Share some unique insights that the user may not have been aware of, but discovered from overall analysis]
 
-🎁 寄语
-[给出温暖有力的鼓励，突出用户的独特价值]
+🎁 Encouragement
+[Give warm and encouraging encouragement, highlighting the unique value of the user]
 
-注意事项：
-1. 分析要有深度，避免表面总结
-2. 见解要独特，给出用户意想不到的洞察
-3. 建议要具体，便于用户行动
-4. 语气要温暖，富有共情
-5. 突出用户的独特性，避免泛泛而谈
-6. 多角度交叉分析，发现深层联系`;
+Notes:
+1. Analysis should be deep, not surface-level summary
+2. Insights should be unique, providing user-unexpected insights
+3. Suggestions should be specific, easy for users to take action
+4. Tone should be warm, full of empathy
+5. Highlight the user's uniqueness, not general discussion
+6. Multi-angle cross-analysis, discover deep connections`;
 
             const messages = [
                 {
@@ -355,44 +355,44 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
 
         } catch (error) {
             this.isLoading = false;
-            console.error('生成总结报告错误:', error);
-            return '抱歉，生成总结报告时出现错误。请稍后重试。';
+            console.error('Error generating summary report:', error);
+            return 'Sorry, an error occurred while generating the summary report. Please try again later.';
         }
     }
 
     getTopicName(topic) {
         const names = {
-            personalGrowth: '个人成长',
-            future: '未来发展',
-            relationship: '情感生活',
-            career: '职业发展'
+            personalGrowth: 'Personal growth',
+            future: 'Future development',
+            relationship: 'Emotional life',
+            career: 'Career development'
         };
         return names[topic] || topic;
     }
 
     async generateResponse(question, answer, context, isLastQuestion = false) {
         try {
-            // 确保context是数组
+            // Ensure context is an array
             const currentContext = Array.isArray(context) ? context : [];
             
-            // 构建新的消息
+            // Build new message
             const newMessage = {
                 role: 'user',
-                content: `问题：${question}\n用户回答：${answer}`
+                content: `Question: ${question}\nUser's answer: ${answer}`
             };
             
-            // 构建完整上下文
+            // Build complete context
             const fullContext = [...currentContext, newMessage];
             
-            // 构建提示词
+            // Build prompt
             const prompt = isLastQuestion ? 
-                '这是当前方向的最后一个问题，请生成一个温暖的总结性回应，肯定用户的分享，并给出一些建议或启发。' :
-                '请根据用户的回答生成温暖的回应，并自然地引导到下一个问题。';
+                'This is the last question for the current direction. Please generate a warm summary response that affirms the user\'s sharing and provides some suggestions or inspiration.' :
+                'Please generate a warm response based on the user\'s answer, and naturally lead to the next question.';
 
-            // 调用API
+            // Call API
             return await this.getResponse(prompt, fullContext, true, isLastQuestion);
         } catch (error) {
-            console.error('生成回应错误:', error);
+            console.error('Error generating response:', error);
             throw error;
         }
     }
@@ -400,5 +400,5 @@ ${answers.map(qa => `问：${qa.question}\n答：${qa.answer}`).join('\n\n')}
 
 if (typeof window !== 'undefined') {
     window.aiService = new AIService();
-    console.log('AIService 已实例化:', window.aiService);
+    console.log('AIService initialized:', window.aiService);
 } 

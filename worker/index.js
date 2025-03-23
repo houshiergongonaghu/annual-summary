@@ -60,7 +60,7 @@ export default {
 
             try {
                 // 打印请求信息
-                console.log('收到请求:', {
+                console.log('Received request:', {
                     method: request.method,
                     headers: Object.fromEntries(request.headers.entries()),
                     url: request.url
@@ -73,12 +73,12 @@ export default {
 
                 // 验证API基础URL
                 if (!env.DEEPSEEK_API_BASE_URL.includes('/v1/')) {
-                    console.warn('API URL 可能缺少版本号，当前URL:', env.DEEPSEEK_API_BASE_URL);
+                    console.warn('API URL may be missing version number, current URL:', env.DEEPSEEK_API_BASE_URL);
                 }
 
                 // 解析请求数据
                 const data = await request.json();
-                console.log('请求数据:', data);
+                console.log('Request data:', data);
                 
                 // 验证请求数据
                 if (!data.messages || !Array.isArray(data.messages)) {
@@ -86,7 +86,7 @@ export default {
                 }
 
                 // 调用Deepseek API前的日志
-                console.log('准备调用Deepseek API:', {
+                console.log('Preparing to call Deepseek API:', {
                     url: env.DEEPSEEK_API_BASE_URL,
                     hasApiKey: !!env.DEEPSEEK_API_KEY,
                     requestBody: data
@@ -107,7 +107,7 @@ export default {
                 });
 
                 // 打印响应信息
-                console.log('Deepseek API响应:', {
+                console.log('Deepseek API response:', {
                     status: response.status,
                     statusText: response.statusText,
                     headers: Object.fromEntries(response.headers.entries())
@@ -116,8 +116,8 @@ export default {
                 // 检查API响应
                 if (!response.ok) {
                     const error = await response.json();
-                    console.error('Deepseek API错误:', error);
-                    throw new Error(`Deepseek API错误: ${error.error?.message || '未知错误'}`);
+                    console.error('Deepseek API error:', error);
+                    throw new Error(`Deepseek API error: ${error.error?.message || 'Unknown error'}`);
                 }
 
                 const result = await response.json();
@@ -134,10 +134,10 @@ export default {
                 );
 
             } catch (error) {
-                console.error('详细错误信息:', {
-                    错误名称: error.name,
-                    错误消息: error.message,
-                    错误堆栈: error.stack
+                console.error('Detailed error information:', {
+                    errorName: error.name,
+                    errorMessage: error.message,
+                    errorStack: error.stack
                 });
                 return new Response(
                     JSON.stringify({ error: error.message }),

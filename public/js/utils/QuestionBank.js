@@ -2,32 +2,37 @@ class QuestionBank {
     constructor() {
         this.questions = {
             personalGrowth: [
-                "今年你在哪些方面有了明显的进步？",
-                "遇到过什么挑战，是如何克服的？",
-                "有什么新学会的技能或知识？",
-                "对自己有了哪些新的认识？"
+                "What was your biggest personal achievement this year?",
+                "What new skills did you develop in the past year?",
+                "What personal challenge did you overcome this year?",
+                "How have you changed as a person in the last year?"
             ],
             future: [
-                "对明年有什么期待和规划？",
-                "想要实现哪些具体的目标？",
-                "准备如何提升自己？",
-                "对未来有什么新的想法？"
+                "What are your key goals for the coming year?",
+                "What skills would you like to develop next year?",
+                "What changes are you planning to make in your life?",
+                "Where do you see yourself in one year from now?"
             ],
             relationship: [
-                "今年人际关系有什么变化？",
-                "与重要的人相处得如何？",
-                "学到了哪些与人相处的经验？",
-                "想要改善哪些人际关系？"
+                "How have your relationships evolved this year?",
+                "What was the most meaningful connection you formed this year?",
+                "What did you learn about relationships this year?",
+                "How would you like your relationships to develop in the coming year?"
             ],
             career: [
-                "工作上有什么成就或突破？",
-                "职业发展遇到什么机遇或挑战？",
-                "对目前的工作状态满意吗？",
-                "对职业规划有什么调整？"
+                "What was your biggest professional achievement this year?",
+                "What challenges did you face in your career this year?",
+                "How have your career goals evolved?",
+                "What professional skills would you like to develop next year?"
             ]
         };
         
-        this.currentIndices = new Map(); // 添加当前问题索引追踪
+        this.currentIndexes = {
+            personalGrowth: 0,
+            future: 0,
+            relationship: 0,
+            career: 0
+        };
     }
 
     // 获取当前问题
@@ -37,7 +42,7 @@ class QuestionBank {
             return null;
         }
 
-        const currentIndex = (this.currentIndices.get(topic) || 0) - 1;
+        const currentIndex = (this.currentIndexes[topic] || 0) - 1;
         return this.questions[topic][currentIndex];
     }
 
@@ -49,7 +54,7 @@ class QuestionBank {
         }
 
         const questions = this.questions[topic];
-        let currentIndex = this.currentIndices.get(topic) || 0;
+        let currentIndex = this.currentIndexes[topic] || 0;
         
         // 检查是否还有下一个问题
         if (currentIndex >= questions.length) {
@@ -57,7 +62,7 @@ class QuestionBank {
         }
 
         // 记录当前问题索引
-        this.currentIndices.set(topic, currentIndex + 1);
+        this.currentIndexes[topic] = currentIndex + 1;
         return questions[currentIndex];
     }
 
@@ -67,12 +72,14 @@ class QuestionBank {
             console.error('无效的主题:', topic);
             return;
         }
-        this.currentIndices.delete(topic);
+        this.currentIndexes[topic] = 0;
     }
 
     // 重置所有记录
     reset() {
-        this.currentIndices.clear();
+        for (const topic in this.currentIndexes) {
+            this.currentIndexes[topic] = 0;
+        }
     }
 
     // 添加新方法
@@ -80,7 +87,7 @@ class QuestionBank {
         if (!this.questions[topic]) {
             return null;
         }
-        const currentIndex = this.currentIndices.get(topic) || 0;
+        const currentIndex = this.currentIndexes[topic] || 0;
         return {
             current: currentIndex,
             total: this.questions[topic].length
@@ -91,7 +98,7 @@ class QuestionBank {
         if (!this.questions[topic]) {
             return false;
         }
-        const currentIndex = this.currentIndices.get(topic) || 0;
+        const currentIndex = this.currentIndexes[topic] || 0;
         return currentIndex < this.questions[topic].length;
     }
 }

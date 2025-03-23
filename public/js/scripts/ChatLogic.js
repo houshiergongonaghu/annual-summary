@@ -16,8 +16,8 @@ class ChatLogic {
     }
 
     async handleUserInput(text) {
-        console.log('收到用户输入:', text);
-        console.log('当前完整状态:', {
+        console.log('Received user input:', text);
+        console.log('Current complete state:', {
             isChoosingNewTopic: this.isChoosingNewTopic,
             isGeneratingSummary: this.isGeneratingSummary,
             currentTopic: this.currentTopic,
@@ -26,15 +26,15 @@ class ChatLogic {
         });
 
         if (!this.validateInput(text)) {
-            return '请输入有效的内容（不少于2个字符）';
+            return 'Please enter valid content (at least 2 characters)';
         }
 
         this.context.push({ role: 'user', content: text });
 
         try {
             if (this.isChoosingNewTopic) {
-                if (text.toLowerCase() === '结束') {
-                    console.log('用户选择结束，生成总结报告');
+                if (text.toLowerCase() === 'end') {
+                    console.log('User chose to end, generating final summary');
                     const summary = await this.generateFinalSummary();
                     this.reset();
                     return summary;
@@ -48,8 +48,8 @@ class ChatLogic {
 
             return await this.handleQuestionAnswer(text);
         } catch (error) {
-            console.error('对话处理错误:', error);
-            return '抱歉，处理您的回答时出现了问题。请重试。';
+            console.error('Conversation processing error:', error);
+            return 'Sorry, there was a problem processing your response. Please try again.';
         }
     }
 
@@ -59,10 +59,10 @@ class ChatLogic {
 
     handleTopicSelection(text) {
         const topics = {
-            '1': ['personalGrowth', '个人成长'],
-            '2': ['future', '未来发展'],
-            '3': ['relationship', '情感生活'],
-            '4': ['career', '职业发展']
+            '1': ['personalGrowth', 'Personal Growth'],
+            '2': ['future', 'Future Development'],
+            '3': ['relationship', 'Relationships'],
+            '4': ['career', 'Career Development']
         };
 
         const matchedTopic = Object.entries(topics).find(([key, [code, name]]) => 
@@ -73,17 +73,17 @@ class ChatLogic {
             const [_, [code, name]] = matchedTopic;
             
             if (this.completedTopics.has(code)) {
-                return `这个方向我们已经聊过了。\n\n要不要选择其他方向，或输入"结束"生成总结报告？`;
+                return `We've already discussed this direction. Would you like to choose another direction, or type "end" to generate a summary report?`;
             }
 
             this.currentTopic = code;
             this.isChoosingNewTopic = false;
             this.questionBank.resetTopic(code);
             const firstQuestion = this.questionBank.getNextQuestion(code);
-            return `好的，让我们来聊聊${name}。\n\n${firstQuestion}`;
+            return `Great, let's talk about ${name}.\n\n${firstQuestion}`;
         }
 
-        return '请选择有效的主题(1-4)或直接输入主题名称。\n\n可选主题：个人成长、未来发展、情感生活、职业发展';
+        return 'Please select a valid topic (1-4) or enter the topic name directly.\n\nAvailable topics: Personal Growth, Future Development, Relationships, Career Development';
     }
 
     async handleQuestionAnswer(text) {
@@ -121,20 +121,20 @@ class ChatLogic {
                     .filter(topic => !this.completedTopics.has(topic));
 
                 const topicNames = {
-                    personalGrowth: '个人成长',
-                    future: '未来发展',
-                    relationship: '情感生活',
-                    career: '职业发展'
+                    personalGrowth: 'Personal Growth',
+                    future: 'Future Development',
+                    relationship: 'Relationships',
+                    career: 'Career Development'
                 };
 
                 const suggestions = remainingTopics
                     .map(topic => `${topicNames[topic]}`)
-                    .join('、');
+                    .join(', ');
 
-                return `${response}\n\n看来我们已经完成了这个方向的交流。${
+                return `${response}\n\n${
                     remainingTopics.length > 0 
-                        ? `\n\n还可以探讨：${suggestions}\n\n(直接输入想聊的方向，或输入"结束"生成总结报告)`
-                        : '\n\n所有方向都已经聊完了，输入"结束"来生成总结报告吧！'
+                        ? `\n\nWe can also explore: ${suggestions}\n\n(Type the direction you'd like to discuss, or type "end" to generate a summary report)`
+                        : '\n\nWe have completed all directions. Type "end" to generate your summary report!'
                 }`;
             }
 
@@ -182,15 +182,15 @@ class ChatLogic {
 
     async handleSummaryConfirmation(text) {
         const confirmation = text.trim().toLowerCase();
-        if (['是', 'yes', 'y', '1'].includes(confirmation)) {
+        if (['yes', 'y', '1'].includes(confirmation)) {
             const summary = await this.generateSummary();
             this.reset();
             return summary;
-        } else if (['否', 'no', 'n', '0'].includes(confirmation)) {
+        } else if (['no', 'n', '0'].includes(confirmation)) {
             this.reset();
-            return '好的，让我们重新开始。\n\n请选择要总结的方向：\n1. 个人成长\n2. 未来发展\n3. 情感生活\n4. 职业发展';
+            return 'Alright, let\'s start over.\n\nPlease choose a direction to summarize:\n1. Personal Growth\n2. Future Development\n3. Relationships\n4. Career Development';
         } else {
-            return '请回答"是"或"否"。';
+            return 'Please answer "yes" or "no".';
         }
     }
 
@@ -201,10 +201,10 @@ class ChatLogic {
         }));
 
         const topicNames = {
-            personalGrowth: '个人成长',
-            future: '未来发展',
-            relationship: '情感生活',
-            career: '职业发展'
+            personalGrowth: 'Personal Growth',
+            future: 'Future Development',
+            relationship: 'Relationships',
+            career: 'Career Development'
         };
 
         const topicName = topicNames[this.currentTopic];
@@ -213,7 +213,7 @@ class ChatLogic {
     }
 
     reset() {
-        console.log('重置所有状态');
+        console.log('Resetting all states');
         this.currentTopic = null;
         this.context = [];
         this.userAnswers.clear();
@@ -226,24 +226,24 @@ class ChatLogic {
     }
 
     async generateTransition(currentQuestion, nextQuestion, lastAnswer) {
-        const prompt = `基于用户对"${currentQuestion}"的回答："${lastAnswer}"，
-请生成一个自然的过渡语，引导到下一个问题："${nextQuestion}"。
-过渡语要：
-1. 对用户的分享做简短的总结或认可
-2. 解释为什么要问下一个问题
-3. 让话题转换显得自然`;
+        const prompt = `Based on the user's answer to "${currentQuestion}": "${lastAnswer}",
+please generate a natural transition that leads to the next question: "${nextQuestion}".
+The transition should:
+1. Briefly summarize or acknowledge the user's sharing
+2. Explain why you're asking the next question
+3. Make the topic transition feel natural`;
 
         return await this.aiService.getResponse(prompt, this.context);
     }
 
     async suggestNextTopic() {
-        console.log('suggestNextTopic被调用');
-        console.log('当前完成的主题:', this.completedTopics);
+        console.log('suggestNextTopic called');
+        console.log('Current completed topics:', this.completedTopics);
         
         const allTopics = ['personalGrowth', 'future', 'relationship', 'career'];
         const remainingTopics = allTopics.filter(topic => !this.completedTopics.has(topic));
         
-        console.log('剩余主题:', remainingTopics);
+        console.log('Remaining topics:', remainingTopics);
 
         if (remainingTopics.length === 0) {
             console.log('没有剩余主题，准备生成总结');
@@ -260,17 +260,17 @@ class ChatLogic {
         });
 
         const topicNames = {
-            personalGrowth: '个人成长',
-            future: '未来发展',
-            relationship: '情感生活',
-            career: '职业发展'
+            personalGrowth: 'Personal Growth',
+            future: 'Future Development',
+            relationship: 'Relationships',
+            career: 'Career Development'
         };
 
         const suggestions = remainingTopics
             .map(topic => `${topicNames[topic]}`)
-            .join('、');
+            .join(', ');
 
-        return `看来我们已经对这个方向有了深入的了解。要不要也聊聊其他方面？\n\n还可以探讨：${suggestions}\n\n(直接输入想聊的方向，或输入"结束"生成总结报告)`;
+        return `It seems we've gained a deep understanding of this direction. Would you like to explore other aspects?\n\nWe can discuss: ${suggestions}\n\n(Type the direction you'd like to discuss, or type "end" to generate a summary report)`;
     }
 
     async generateFinalSummary() {

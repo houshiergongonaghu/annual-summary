@@ -1,4 +1,4 @@
-require('dotenv').config(); // 加载.env文件中的环境变量
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -6,22 +6,22 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 启用CORS和JSON解析
+// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // 提供静态文件服务
+app.use(express.static('public')); // Serve static files
 
 // 简化的API代理 - 适配任何格式的请求
 app.post('/api/chat', async (req, res) => {
     try {
-        console.log('收到请求:', req.body);
+        console.log('Received request:', req.body);
         
-        // 准备发送到DeepSeek的数据
+        // Prepare data to send to DeepSeek
         let deepseekBody;
         
-        // 支持两种格式：{ prompt } 或 { messages }
+        // Support two formats: { prompt } or { messages }
         if (req.body.prompt) {
-            // 如果是简单的 prompt 请求
+            // If it's a simple prompt request
             deepseekBody = {
                 model: 'deepseek-chat',
                 messages: [
@@ -31,7 +31,7 @@ app.post('/api/chat', async (req, res) => {
                 max_tokens: 2000
             };
         } else if (req.body.messages) {
-            // 如果已经有格式化的 messages
+            // If it already has formatted messages
             deepseekBody = {
                 ...req.body,
                 model: req.body.model || 'deepseek-chat',
@@ -39,10 +39,10 @@ app.post('/api/chat', async (req, res) => {
                 max_tokens: req.body.max_tokens || 2000
             };
         } else {
-            return res.status(400).json({ error: '无效的请求格式' });
+            return res.status(400).json({ error: 'Invalid request format' });
         }
         
-        // 调用 DeepSeek API
+        // Call DeepSeek API
         const response = await fetch(process.env.DEEPSEEK_API_BASE_URL, {
             method: 'POST',
             headers: {
@@ -54,9 +54,9 @@ app.post('/api/chat', async (req, res) => {
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('API错误:', response.status, errorText);
+            console.error('API error:', response.status, errorText);
             return res.status(response.status).json({ 
-                error: '调用DeepSeek API失败',
+                error: 'Failed to call DeepSeek API',
                 statusCode: response.status,
                 details: errorText
             });
@@ -65,12 +65,12 @@ app.post('/api/chat', async (req, res) => {
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('服务器错误:', error);
+        console.error('Server error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
 // 启动服务器
 app.listen(PORT, () => {
-    console.log(`服务器运行在 http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
 }); 

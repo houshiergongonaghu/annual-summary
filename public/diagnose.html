@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>API 诊断工具</title>
+    <title>API Diagnostic Tool</title>
     <style>
         .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
         .success { color: green; }
@@ -10,59 +10,59 @@
     </style>
 </head>
 <body>
-    <h2>API 诊断工具</h2>
+    <h2>API Diagnostic Tool</h2>
     <div id="tests">
         <div class="test-item" id="network-test">
-            <h3>1. 网络连接测试</h3>
-            <div class="result">等待测试...</div>
+            <h3>1. Network Connection Test</h3>
+            <div class="result">Waiting for test...</div>
         </div>
         <div class="test-item" id="api-key-test">
-            <h3>2. API密钥检查</h3>
-            <div class="result">等待测试...</div>
+            <h3>2. API Key Check</h3>
+            <div class="result">Waiting for test...</div>
         </div>
         <div class="test-item" id="api-service-test">
-            <h3>3. API服务测试</h3>
-            <div class="result">等待测试...</div>
+            <h3>3. API Service Test</h3>
+            <div class="result">Waiting for test...</div>
         </div>
     </div>
-    <button onclick="runDiagnosis()">开始诊断</button>
+    <button onclick="runDiagnosis()">Start Diagnosis</button>
     <div id="logs"></div>
 
     <script>
         async function runDiagnosis() {
-            // 重置结果
+            // Reset results
             document.querySelectorAll('.result').forEach(el => {
-                el.textContent = '测试中...';
+                el.textContent = 'Testing...';
                 el.className = 'result pending';
             });
 
-            // 1. 网络连接测试
+            // 1. Network connection test
             try {
                 const networkTest = await fetch('https://api.deepseek.com', {
                     method: 'HEAD'
                 });
-                updateResult('network-test', true, 'API服务器可以访问');
+                updateResult('network-test', true, 'API server is accessible');
             } catch (error) {
-                updateResult('network-test', false, '无法连接到API服务器: ' + error.message);
+                updateResult('network-test', false, 'Cannot connect to API server: ' + error.message);
                 return;
             }
 
-            // 2. API密钥测试
+            // 2. API Key test
             try {
                 const keyTest = await fetch('/api/test');
                 const keyData = await keyTest.json();
                 if (keyData.config.hasApiKey) {
-                    updateResult('api-key-test', true, 'API密钥已配置');
+                    updateResult('api-key-test', true, 'API key is configured');
                 } else {
-                    updateResult('api-key-test', false, 'API密钥未配置');
+                    updateResult('api-key-test', false, 'API key is not configured');
                     return;
                 }
             } catch (error) {
-                updateResult('api-key-test', false, '检查API密钥失败: ' + error.message);
+                updateResult('api-key-test', false, 'Failed to check API key: ' + error.message);
                 return;
             }
 
-            // 3. API服务测试
+            // 3. API Service test
             try {
                 const serviceTest = await fetch('/api/chat', {
                     method: 'POST',
@@ -79,12 +79,12 @@
                 
                 const testData = await serviceTest.json();
                 if (serviceTest.ok) {
-                    updateResult('api-service-test', true, 'API服务正常');
+                    updateResult('api-service-test', true, 'API service is working properly');
                 } else {
-                    updateResult('api-service-test', false, `API服务错误: ${testData.error || '未知错误'}`);
+                    updateResult('api-service-test', false, `API service error: ${testData.error || 'Unknown error'}`);
                 }
             } catch (error) {
-                updateResult('api-service-test', false, '调用API服务失败: ' + error.message);
+                updateResult('api-service-test', false, 'Failed to call API service: ' + error.message);
             }
         }
 

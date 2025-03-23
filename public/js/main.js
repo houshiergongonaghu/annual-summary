@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 输入建议
         const suggestions = {
-            initial: ['1', '2', '3', '4', '个人成长', '未来发展', '情感生活', '职业发展'],
-            confirmation: ['是', '否'],
+            initial: ['1', '2', '3', '4', 'Personal Growth', 'Future Development', 'Relationships', 'Career Development'],
+            confirmation: ['yes', 'no'],
         };
 
         // 处理用户输入
@@ -43,12 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = userInput.value.trim();
             
             if (isProcessing) {
-                chatMessages.showError('请等待上一条消息处理完成...');
+                chatMessages.showError('Please wait for the previous message to complete...');
                 return;
             }
 
             if (!text) {
-                chatMessages.showError('请输入内容');
+                chatMessages.showError('Please enter content');
                 return;
             }
 
@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 updateInputSuggestions();
             } catch (error) {
-                console.error('发送消息错误:', error);
-                chatMessages.showError('消息处理出错，请重试');
+                console.error('Error sending message:', error);
+                chatMessages.showError('Error processing message, please try again');
             } finally {
                 isProcessing = false;
                 updateUIState(false);
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateUIState = (processing) => {
             userInput.disabled = processing;
             sendButton.disabled = processing;
-            sendButton.textContent = processing ? '发送中...' : '发送';
+            sendButton.textContent = processing ? 'Sending...' : 'Send';
             
             if (processing) {
                 sendButton.classList.add('processing');
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (currentSuggestions) {
-                const suggestionText = `建议输入: ${currentSuggestions.join(' | ')}`;
+                const suggestionText = `Suggested input: ${currentSuggestions.join(' | ')}`;
                 chatMessages.showInputSuggestion(suggestionText);
             }
         };
@@ -124,6 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 初始输入建议
         updateInputSuggestions();
     } catch (error) {
-        console.error('初始化错误:', error);
+        console.error('Initialization error:', error);
     }
 }); 
